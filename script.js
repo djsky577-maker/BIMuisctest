@@ -2421,3 +2421,74 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 })();
 // END SLEEP POPUP TOUCH CLOSE
+
+// MY PLAYLIST - RENDER FOLLOWED ARTISTS
+(function() {
+    function renderPlArtists() {
+        var row1 = document.getElementById('plArtistsRow1');
+        var row2 = document.getElementById('plArtistsRow2');
+        if (!row1 || !row2) return;
+
+        var list = window.followedArtists || [];
+        if (list.length === 0) {
+            row1.innerHTML = '<div style="color:#666;font-size:12px;padding:8px 0;font-style:italic;">Follow artists to see them here 💚</div>';
+            row2.style.display = 'none';
+            return;
+        }
+        row2.style.display = 'flex';
+
+        // Split list into 2 rows
+        var half = Math.ceil(list.length / 2);
+        var top = list.slice(0, half);
+        var bottom = list.slice(half);
+
+        function makeCard(a) {
+            var name = (a.name || '').replace(/</g, '&lt;');
+            var img = a.img || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(a.name || 'X') + '&background=00e0d0&color=000&size=200');
+            return '<div class="pl-artist-card" data-name="' + (a.name || '').replace(/"/g, '&quot;') + '"><img src="' + img + '" onerror="this.src=\'https://ui-avatars.com/api/?name=X&background=00e0d0&color=000&size=200\'"><div class="pl-artist-label">' + name + '</div></div>';
+        }
+
+        row1.innerHTML = top.map(makeCard).join('');
+        row2.innerHTML = bottom.map(makeCard).join('');
+
+        // Make both rows scroll together
+        var syncing = false;
+        function syncScroll(source, target) {
+            if (syncing) return;
+            syncing = true;
+            target.scrollLeft = source.scrollLeft;
+            setTimeout(function() { syncing = false; }, 30);
+        }
+        row1.onscroll = function() { syncScroll(row1, row2); };
+        row2.onscroll = function() { syncScroll(row2, row1); };
+
+        // Tap → open artist profile
+        document.querySelectorAll('.pl-artist-card').forEach(function(card) {
+            card.onclick = function() {
+                var name = card.getAttribute('data-name');
+                var img = card.querySelector('img').src;
+                if (typeof window.openArtistProfile === 'function') {
+                    window.openArtistProfile(name, img);
+                }
+            };
+        });
+    }
+
+    // Refresh every time the playlist view becomes visible
+    var lastVisible = false;
+    setInterval(function() {
+        var v = document.getElementById('view-library');
+        if (!v) return;
+        var isVisible = v.classList.contains('active');
+        if (isVisible && !lastVisible) {
+            // Just opened → render
+            renderPlArtists();
+        }
+        if (isVisible) lastVisible = true;
+        else lastVisible = false;
+    }, 500);
+
+    // Initial render after a delay (in case app loads on library tab)
+    setTimeout(renderPlArtists, 2500);
+})();
+// END MY PLAYLIST - RENDER FOLLOWED ARTISTS

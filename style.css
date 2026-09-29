@@ -701,3 +701,45 @@ body { background: #050505 !important; }
 #forYou .foryou-artist {
     font-size: 10px !important;
 }
+
+/* MY PLAYLIST - Artists You Follow section */
+.pl-artists-section {
+    margin-bottom: 20px;
+}
+.pl-artist-row {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 8px 18px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+}
+.pl-artist-row::-webkit-scrollbar { display: none; }
+.pl-artist-card {
+    flex: 0 0 auto;
+    width: 72px;
+    text-align: center;
+    cursor: pointer;
+}
+.pl-artist-card img {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(0, 224, 208, 0.4);
+    background: #111;
+    display: block;
+}
+.pl-artist-card:active img {
+    border-color: #00e0d0;
+    transform: scale(0.94);
+}
+.pl-artist-card .pl-artist-label {
+    font-size: 10px;
+    color: #ccc;
+    margin-top: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
