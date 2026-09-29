@@ -655,3 +655,49 @@ body { background: #050505 !important; }
     0%, 100% { filter: drop-shadow(0 0 4px rgba(0, 224, 208, 0.5)); }
     50%      { filter: drop-shadow(0 0 14px rgba(0, 224, 208, 1)); }
 }
+
+/* ===== SIZE ADJUSTMENTS ===== */
+
+/* Recently Played - SMALLER cards */
+#recentlyPlayed .card {
+    flex: 0 0 auto !important;
+    width: 95px !important;
+    min-width: 95px !important;
+}
+#recentlyPlayed .card-img {
+    width: 95px !important;
+    height: 95px !important;
+}
+#recentlyPlayed .card-img img {
+    width: 95px !important;
+    height: 95px !important;
+    object-fit: cover !important;
+}
+#recentlyPlayed .card-title {
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    margin-top: 4px !important;
+}
+#recentlyPlayed .card-sub {
+    font-size: 9px !important;
+}
+
+/* For You - TALLER cards (but not too wide) */
+#forYou .foryou-card {
+    width: 165px !important;
+    flex: 0 0 auto !important;
+}
+#forYou .foryou-thumb-wrap {
+    height: 195px !important;
+}
+#forYou .foryou-card img {
+    height: 195px !important;
+    object-fit: cover !important;
+}
+#forYou .foryou-title {
+    font-size: 12px !important;
+    -webkit-line-clamp: 2 !important;
+}
+#forYou .foryou-artist {
+    font-size: 10px !important;
+}
