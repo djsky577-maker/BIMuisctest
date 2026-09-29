@@ -2396,3 +2396,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 })();
 // END SLEEP TIMER V3
+
+// SLEEP POPUP TOUCH CLOSE
+(function() {
+    document.addEventListener('touchstart', function(e) {
+        var modal = document.getElementById('sleepModal');
+        if (!modal || !modal.classList.contains('show')) return;
+        var popup = document.getElementById('sleepTimerPopup');
+        var sleepBtn = document.getElementById('sleepBtn');
+        // If touch is NOT inside the popup AND NOT on the sleep button itself → close
+        if (popup && !popup.contains(e.target) && !(sleepBtn && sleepBtn.contains(e.target))) {
+            window.closeSleepPopup();
+        }
+    }, { passive: true });
+
+    document.addEventListener('click', function(e) {
+        var modal = document.getElementById('sleepModal');
+        if (!modal || !modal.classList.contains('show')) return;
+        var popup = document.getElementById('sleepTimerPopup');
+        var sleepBtn = document.getElementById('sleepBtn');
+        if (popup && !popup.contains(e.target) && !(sleepBtn && sleepBtn.contains(e.target))) {
+            window.closeSleepPopup();
+        }
+    });
+})();
+// END SLEEP POPUP TOUCH CLOSE
