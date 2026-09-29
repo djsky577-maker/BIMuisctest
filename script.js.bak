@@ -2103,33 +2103,55 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 // END FOR YOU UPGRADE
 
-
-
-
-
-// SLEEP TIMER V2
+// SLEEP TIMER
 (function() {
     var sleepEndTime = null;
     var sleepCountdownInterval = null;
 
-    function injectPopup() {
-        if (document.getElementById('sleepTimerPopup')) return;
+    function injectStyle() {
+        if (document.getElementById('sleepTimerStyle')) return;
         var style = document.createElement('style');
+        style.id = 'sleepTimerStyle';
         style.textContent = `
-            #sleepTimerPopup {
+            #sleepBtn {
+                display: none;
+                position: fixed;
+                bottom: 220px;
+                left: 15px;
+                z-index: 999997;
+                background: rgba(0, 224, 208, 0.15);
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                border: 1px solid rgba(0, 224, 208, 0.5);
+                border-radius: 50%;
+                width: 52px;
+                height: 52px;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                box-shadow: 0 4px 18px rgba(0,0,0,0.7), 0 0 20px rgba(0,224,208,0.3);
+                transition: all 0.2s ease;
+                color: #00e0d0;
+                font-size: 24px;
+            }
+            #sleepBtn:active { transform: scale(0.9); background: rgba(0,224,208,0.4); }
+            #sleepBtn.show { display: flex; }
+            #sleepBtn.active { background: rgba(0,224,208,0.5); color: #000; border-color: #00e0d0; }
+
+            #sleepPopup {
                 display: none;
                 position: fixed;
                 top: 50%; left: 50%;
                 transform: translate(-50%, -50%);
-                z-index: 99999999;
-                background: rgba(15, 15, 15, 0.97);
+                z-index: 9999998;
+                background: rgba(15, 15, 15, 0.95);
                 backdrop-filter: blur(30px);
                 -webkit-backdrop-filter: blur(30px);
-                border: 1.5px solid rgba(0, 224, 208, 0.6);
+                border: 1px solid rgba(0, 224, 208, 0.5);
                 border-radius: 20px;
                 padding: 24px 20px;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 50px rgba(0,224,208,0.4);
-                min-width: 280px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 40px rgba(0,224,208,0.3);
+                min-width: 260px;
                 text-align: center;
                 animation: sleepPopIn 0.3s ease;
             }
@@ -2137,7 +2159,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 from { opacity: 0; transform: translate(-50%, -45%); }
                 to { opacity: 1; transform: translate(-50%, -50%); }
             }
-            #sleepTimerPopup.show { display: block; }
+            #sleepPopup.show { display: block; }
+
             .sleep-title {
                 color: #00e0d0;
                 font-size: 16px;
@@ -2147,7 +2170,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 margin-bottom: 16px;
                 text-shadow: 0 0 15px rgba(0,224,208,0.6);
             }
-            .sleep-opt {
+            .sleep-option {
                 display: block;
                 width: 100%;
                 padding: 12px;
@@ -2162,7 +2185,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 font-family: inherit;
                 transition: all 0.2s ease;
             }
-            .sleep-opt:active {
+            .sleep-option:active {
                 background: rgba(0, 224, 208, 0.3);
                 border-color: #00e0d0;
             }
@@ -2175,40 +2198,59 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         `;
         document.head.appendChild(style);
-
-        var popup = document.createElement('div');
-        popup.id = 'sleepTimerPopup';
-        popup.innerHTML = `
-            <div class="sleep-title">😴 Sleep Timer</div>
-            <button class="sleep-opt" onclick="window.setSleepTimer(15)">15 minutes</button>
-            <button class="sleep-opt" onclick="window.setSleepTimer(30)">30 minutes</button>
-            <button class="sleep-opt" onclick="window.setSleepTimer(60)">60 minutes</button>
-            <button class="sleep-opt sleep-cancel" onclick="window.closeSleepPopup()">✕ Cancel</button>
-        `;
-        document.body.appendChild(popup);
-        popup.addEventListener('click', function(e) { e.stopPropagation(); });
-        document.addEventListener('click', function(e) {
-            if (popup.classList.contains('show') && !popup.contains(e.target) && e.target.id !== 'sleepBtn' && !e.target.closest('#sleepBtn')) {
-                popup.classList.remove('show');
-            }
-        });
     }
 
-    window.openSleepPopup = function() {
-        injectPopup();
-        var p = document.getElementById('sleepTimerPopup');
-        if (p) p.classList.add('show');
-    };
-    window.closeSleepPopup = function() {
-        var p = document.getElementById('sleepTimerPopup');
-        if (p) p.classList.remove('show');
-    };
+    function injectElements() {
+        if (!document.getElementById('sleepBtn')) {
+            var btn = document.createElement('div');
+            btn.id = 'sleepBtn';
+            btn.innerHTML = '⏰';
+            btn.title = 'Sleep Timer';
+            document.body.appendChild(btn);
+            btn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showPopup();
+            };
+        }
+
+        if (!document.getElementById('sleepPopup')) {
+            var popup = document.createElement('div');
+            popup.id = 'sleepPopup';
+            popup.innerHTML = `
+                <div class="sleep-title">😴 Sleep Timer</div>
+                <button class="sleep-option" onclick="window.setSleepTimer(15)">15 minutes</button>
+                <button class="sleep-option" onclick="window.setSleepTimer(30)">30 minutes</button>
+                <button class="sleep-option" onclick="window.setSleepTimer(60)">60 minutes</button>
+                <button class="sleep-option sleep-cancel" onclick="window.cancelSleepTimer()">✕ Cancel Timer</button>
+            `;
+            document.body.appendChild(popup);
+            popup.addEventListener('click', function(e) { e.stopPropagation(); });
+            document.addEventListener('click', function(e) {
+                if (popup.classList.contains('show') && !popup.contains(e.target)) {
+                    hidePopup();
+                }
+            });
+        }
+    }
+
+    function showPopup() {
+        var popup = document.getElementById('sleepPopup');
+        if (popup) popup.classList.add('show');
+    }
+    function hidePopup() {
+        var popup = document.getElementById('sleepPopup');
+        if (popup) popup.classList.remove('show');
+    }
 
     window.setSleepTimer = function(minutes) {
-        window.cancelSleepTimer();
+        cancelSleepTimer();
         sleepEndTime = Date.now() + (minutes * 60 * 1000);
         var btn = document.getElementById('sleepBtn');
-        if (btn) { btn.classList.add('active'); btn.title = 'Sleep in ' + minutes + ' min'; }
+        if (btn) {
+            btn.classList.add('active');
+            btn.title = 'Sleep in ' + minutes + ' min';
+        }
         sleepCountdownInterval = setInterval(function() {
             var remaining = sleepEndTime - Date.now();
             if (remaining <= 0) { triggerSleep(); return; }
@@ -2217,7 +2259,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var btn2 = document.getElementById('sleepBtn');
             if (btn2) btn2.title = 'Sleep in ' + mins + 'm ' + secs + 's';
         }, 1000);
-        window.closeSleepPopup();
+        hidePopup();
         showToast('😴 Sleep timer set for ' + minutes + ' minutes');
     };
 
@@ -2226,11 +2268,13 @@ document.addEventListener('DOMContentLoaded', function() {
         sleepEndTime = null;
         var btn = document.getElementById('sleepBtn');
         if (btn) { btn.classList.remove('active'); btn.title = 'Sleep Timer'; }
-        window.closeSleepPopup();
+        hidePopup();
     };
 
     function triggerSleep() {
-        var steps = 30, stepMs = 1000, step = 0;
+        var steps = 30;
+        var stepMs = 1000;
+        var step = 0;
         if (window.ytPlayer && typeof window.ytPlayer.setVolume === 'function') {
             var fadeIv = setInterval(function() {
                 step++;
@@ -2242,23 +2286,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     try { window.ytPlayer.setVolume(100); } catch(e) {}
                 }
             }, stepMs);
-        } else {
+        } else if (document.getElementById('audioPlayer')) {
             var ap = document.getElementById('audioPlayer');
-            if (ap) {
-                var startVol = ap.volume;
-                var fadeIv2 = setInterval(function() {
-                    step++;
-                    var vol = Math.max(0, startVol - ((step / steps) * startVol));
-                    try { ap.volume = vol; } catch(e) {}
-                    if (step >= steps) {
-                        clearInterval(fadeIv2);
-                        try { ap.pause(); } catch(e) {}
-                        try { ap.volume = startVol; } catch(e) {}
-                    }
-                }, stepMs);
-            }
+            var startVol = ap.volume;
+            var fadeIv2 = setInterval(function() {
+                step++;
+                var vol = Math.max(0, startVol - ((step / steps) * startVol));
+                try { ap.volume = vol; } catch(e) {}
+                if (step >= steps) {
+                    clearInterval(fadeIv2);
+                    try { ap.pause(); } catch(e) {}
+                    try { ap.volume = startVol; } catch(e) {}
+                }
+            }, stepMs);
         }
-        window.cancelSleepTimer();
+        cancelSleepTimer();
         showToast('😴 Sleep timer ended. Music stopped.');
     }
 
@@ -2276,5 +2318,23 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function(){ if (toast.parentNode) toast.parentNode.removeChild(toast); }, 400);
         }, 2500);
     }
+
+    function init() {
+        injectStyle();
+        injectElements();
+        setInterval(function() {
+            var btn = document.getElementById('sleepBtn');
+            if (!btn) return;
+            var fp = document.getElementById('fullPlayer');
+            if (fp && fp.classList.contains('active')) btn.classList.add('show');
+            else btn.classList.remove('show');
+        }, 400);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 })();
-// END SLEEP TIMER V2
+// END SLEEP TIMER

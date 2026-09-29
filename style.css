@@ -601,3 +601,40 @@ body { background: #050505 !important; }
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
 }
+
+/* ===== SLEEP TIMER BUTTON (in control row) ===== */
+#sleepBtn {
+    background: rgba(0, 224, 208, 0.25) !important;
+    border: 1.5px solid #00e0d0 !important;
+    border-radius: 50% !important;
+    width: 44px !important;
+    height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    position: relative !important;
+    box-shadow: 0 0 15px rgba(0, 224, 208, 0.5), inset 0 0 10px rgba(0, 224, 208, 0.2) !important;
+    animation: sleepGlow 2s ease-in-out infinite !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    transition: transform 0.2s ease !important;
+}
+#sleepBtn svg {
+    width: 22px !important;
+    height: 22px !important;
+    fill: #00e0d0 !important;
+    filter: drop-shadow(0 0 6px rgba(0, 224, 208, 0.8)) !important;
+}
+#sleepBtn:active {
+    transform: scale(0.9) !important;
+    background: rgba(0, 224, 208, 0.5) !important;
+}
+#sleepBtn.active {
+    background: rgba(0, 224, 208, 0.6) !important;
+    box-shadow: 0 0 25px rgba(0, 224, 208, 0.9) !important;
+}
+@keyframes sleepGlow {
+    0%, 100% { box-shadow: 0 0 12px rgba(0, 224, 208, 0.4), inset 0 0 8px rgba(0, 224, 208, 0.15); }
+    50%      { box-shadow: 0 0 22px rgba(0, 224, 208, 0.8), inset 0 0 12px rgba(0, 224, 208, 0.3); }
+}
