@@ -2103,6 +2103,8 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 // END FOR YOU UPGRADE
 
+
+
 // SLEEP TIMER
 (function() {
     var sleepEndTime = null;
@@ -2116,7 +2118,7 @@ document.addEventListener('DOMContentLoaded', function() {
             #sleepBtn {
                 display: none;
                 position: fixed;
-                bottom: 220px;
+                bottom: 155px;
                 left: 15px;
                 z-index: 999997;
                 background: rgba(0, 224, 208, 0.15);
@@ -2286,19 +2288,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     try { window.ytPlayer.setVolume(100); } catch(e) {}
                 }
             }, stepMs);
-        } else if (document.getElementById('audioPlayer')) {
+        } else {
             var ap = document.getElementById('audioPlayer');
-            var startVol = ap.volume;
-            var fadeIv2 = setInterval(function() {
-                step++;
-                var vol = Math.max(0, startVol - ((step / steps) * startVol));
-                try { ap.volume = vol; } catch(e) {}
-                if (step >= steps) {
-                    clearInterval(fadeIv2);
-                    try { ap.pause(); } catch(e) {}
-                    try { ap.volume = startVol; } catch(e) {}
-                }
-            }, stepMs);
+            if (ap) {
+                var startVol = ap.volume;
+                var fadeIv2 = setInterval(function() {
+                    step++;
+                    var vol = Math.max(0, startVol - ((step / steps) * startVol));
+                    try { ap.volume = vol; } catch(e) {}
+                    if (step >= steps) {
+                        clearInterval(fadeIv2);
+                        try { ap.pause(); } catch(e) {}
+                        try { ap.volume = startVol; } catch(e) {}
+                    }
+                }, stepMs);
+            }
         }
         cancelSleepTimer();
         showToast('😴 Sleep timer ended. Music stopped.');
@@ -2322,12 +2326,19 @@ document.addEventListener('DOMContentLoaded', function() {
     function init() {
         injectStyle();
         injectElements();
+
+        // Show button whenever a song is playing (mini-player visible)
         setInterval(function() {
             var btn = document.getElementById('sleepBtn');
             if (!btn) return;
-            var fp = document.getElementById('fullPlayer');
-            if (fp && fp.classList.contains('active')) btn.classList.add('show');
-            else btn.classList.remove('show');
+            // Show if mini-player is active (song is playing)
+            var miniPlayer = document.getElementById('miniPlayer');
+            var isPlaying = miniPlayer && miniPlayer.classList.contains('active');
+            if (isPlaying) {
+                btn.classList.add('show');
+            } else {
+                btn.classList.remove('show');
+            }
         }, 400);
     }
 
