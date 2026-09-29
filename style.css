@@ -611,43 +611,47 @@ body { background: #050505 !important; }
 }
 
 
-/* ===== SLEEP TIMER BUTTON (in control row) ===== */
-#sleepBtn {
+
+
+
+/* SLEEP TIMER BUTTON - matches other control buttons */
+.full-extra #sleepBtn {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     width: 44px !important;
     height: 44px !important;
-    background: rgba(0, 224, 208, 0.2) !important;
-    border: 1.5px solid #00e0d0 !important;
+    background: transparent !important;
+    border: none !important;
     border-radius: 50% !important;
     padding: 0 !important;
     margin: 0 !important;
     cursor: pointer !important;
-    position: static !important;
-    top: auto !important;
-    bottom: auto !important;
-    left: auto !important;
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
     right: auto !important;
-    box-shadow: 0 0 15px rgba(0, 224, 208, 0.5) !important;
-    transition: transform 0.2s ease !important;
-    animation: sleepGlow 2s ease-in-out infinite !important;
+    bottom: auto !important;
+    box-shadow: none !important;
+    outline: none !important;
+    flex: 0 0 auto !important;
     vertical-align: middle !important;
 }
-#sleepBtn svg {
+.full-extra #sleepBtn svg {
     width: 22px !important;
     height: 22px !important;
     fill: #00e0d0 !important;
-    filter: drop-shadow(0 0 6px rgba(0, 224, 208, 0.8)) !important;
+    filter: drop-shadow(0 0 8px rgba(0, 224, 208, 0.9)) !important;
+    animation: sleepGlowIcon 2s ease-in-out infinite !important;
 }
-#sleepBtn:active {
-    transform: scale(0.9) !important;
+.full-extra #sleepBtn:active svg {
+    transform: scale(0.9);
 }
-#sleepBtn.active {
-    background: rgba(0, 224, 208, 0.6) !important;
-    box-shadow: 0 0 25px rgba(0, 224, 208, 0.9) !important;
+.full-extra #sleepBtn.active {
+    background: rgba(0, 224, 208, 0.2) !important;
+    border-radius: 50% !important;
 }
-@keyframes sleepGlow {
-    0%, 100% { box-shadow: 0 0 12px rgba(0, 224, 208, 0.4); }
-    50%      { box-shadow: 0 0 22px rgba(0, 224, 208, 0.8); }
+@keyframes sleepGlowIcon {
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(0, 224, 208, 0.5)); }
+    50%      { filter: drop-shadow(0 0 14px rgba(0, 224, 208, 1)); }
 }
