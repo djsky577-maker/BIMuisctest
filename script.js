@@ -3232,30 +3232,29 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 // END AUTO SELECT
 
-// END SCREEN ARTIST POPULATE
-(function() {
-    var playedInEndScreen = [];         // memory: songs already shown
-    var PLAYED_KEY = 'bi_es_played';    // localStorage key
-    var populatedForSongId = null;      // which song we last populated for
 
-    // Load played list from storage
+
+// END SCREEN ARTIST POPULATE - V2
+(function() {
+    var playedInEndScreen = [];
+    var PLAYED_KEY = 'bi_es_played';
+    var populatedForSongId = null;
+
     try {
         var raw = localStorage.getItem(PLAYED_KEY);
         playedInEndScreen = raw ? JSON.parse(raw) : [];
     } catch(e) { playedInEndScreen = []; }
 
     function savePlayed() {
-        try { localStorage.setItem(PLAYED_KEY, JSON.stringify(playedInEndScreen.slice(-100))); } catch(e) {}
+        try { localStorage.setItem(PLAYED_KEY, JSON.stringify(playedInEndScreen.slice(-150))); } catch(e) {}
     }
 
-    // Bad words to filter out (talking/non-song videos)
     var BAD_WORDS = [
         'interview', 'podcast', 'reaction', 'behind the scenes', 'behind-the-scenes',
         'vlog', 'trailer', 'teaser', 'documentary', 'explained', 'unboxing',
-        'review', 'talking', 'highlights', 'breaking news', 'news', 'conference',
-        'speech', 'standup', 'stand-up', 'comedy', 'compilation of', 'q&a',
-        'q & a', 'q and a', 'ama', 'ama ', 'on the street', 'first listen',
-        'live stream chat', 'lofi', 'study', 'sleep', 'relax', 'meditation'
+        'review', 'highlights', 'breaking news', 'news', 'conference',
+        'speech', 'standup', 'stand-up', 'comedy', 'q&a', 'q & a', 'q and a',
+        'ama', 'on the street', 'first listen', 'lofi', 'study', 'sleep', 'relax', 'meditation'
     ];
 
     function hasBadWord(text) {
@@ -3267,46 +3266,71 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
     }
 
-    function getCurrentArtist() {
+    // Get ALL artist names from the current song (main + featured)
+    function getArtistTargets() {
+        var targets = [];
         try {
-            if (window.ytResults && window.ytResults[window.currentIndex]) {
-                return window.ytResults[window.currentIndex].snippet.channelTitle || '';
+            if (!window.ytResults || !window.ytResults[window.currentIndex]) return targets;
+            var song = window.ytResults[window.currentIndex];
+            var title = song.snippet.title || '';
+            var channel = song.snippet.channelTitle || '';
+
+            // Main channel artist
+            var mainArtist = cleanName(channel);
+            if (mainArtist) targets.push(mainArtist);
+
+            // Featured artists from title (ft. / feat. / with)
+            var ftMatches = title.match(/(?:ft\.?|feat\.?|featuring|with)\s+([A-Za-z0-9\s&\.\-']+?)(?:\s*[\(\[]|\s*-|\s*$)/gi);
+            if (ftMatches) {
+                ftMatches.forEach(function(m) {
+                    var cleaned = m.replace(/^(?:ft\.?|feat\.?|featuring|with)\s+/i, '').replace(/[\s\-\(\[\)\]]+$/,'').trim();
+                    var cn = cleanName(cleaned);
+                    if (cn && targets.indexOf(cn) < 0) targets.push(cn);
+                });
             }
+
+            // Also grab any artist from the title before " - " or "("
+            var beforeDash = title.split(' - ')[0].trim();
+            var beforeDashClean = cleanName(beforeDash);
+            if (beforeDashClean && targets.indexOf(beforeDashClean) < 0) targets.push(beforeDashClean);
         } catch(e) {}
-        return '';
+        return targets;
     }
 
-    function getCurrentSongId() {
-        try {
-            if (window.ytResults && window.ytResults[window.currentIndex]) {
-                return window.ytResults[window.currentIndex].id.videoId || '';
-            }
-        } catch(e) {}
-        return '';
-    }
-
-    // Check if a song belongs to the artist (by uploader or by "ft." in title)
-    function belongsToArtist(song, artistName) {
-        if (!artistName) return false;
-        var nm = artistName.toLowerCase()
-            .replace(/vevo|official|topic|\s*-\s*topic/gi, '')
+    function cleanName(name) {
+        if (!name) return '';
+        return name.toLowerCase()
+            .replace(/vevo|official|topic|\s*-\s*topic|records|entertainment|music|channel/gi, '')
+            .replace(/\s+/g, ' ')
             .trim();
+    }
+
+    // Return true if the artist name (first word of it) appears anywhere in the text
+    function textContainsArtist(text, artist) {
+        if (!text || !artist) return false;
+        var t = text.toLowerCase();
+        var nm = cleanName(artist);
         if (!nm) return false;
 
-        var uploader = (song.uploaderName || '').toLowerCase();
-        // Match uploader (or partial)
-        if (uploader.indexOf(nm) >= 0 || nm.indexOf(uploader.replace(/\s*-\s*topic$/,'')) >= 0) {
-            return true;
-        }
+        // Whole name
+        if (t.indexOf(nm) >= 0) return true;
 
-        // Match first word of artist in title (e.g. "Omah" in "Omah Lay")
+        // First word (if at least 4 chars — avoid "the", "ft")
         var firstWord = nm.split(' ')[0];
-        if (firstWord.length >= 4) {
-            var title = (song.title || '').toLowerCase();
-            // If artist's first word appears in the title, and it's a real song → count
-            if (title.indexOf(firstWord) >= 0) return true;
-        }
+        if (firstWord.length >= 4 && t.indexOf(firstWord) >= 0) return true;
 
+        return false;
+    }
+
+    function belongsToArtist(song, targets) {
+        if (!song || !targets || targets.length === 0) return false;
+        var uploader = song.uploaderName || '';
+        var title = song.title || '';
+
+        for (var i = 0; i < targets.length; i++) {
+            if (textContainsArtist(uploader, targets[i])) return true;
+            if (textContainsArtist(title, targets[i])) return true;
+        }
         return false;
     }
 
@@ -3357,18 +3381,23 @@ document.addEventListener('DOMContentLoaded', function() {
         var pool = window.simPool || [];
         if (pool.length < 4) return;
 
-        var currentSongId = getCurrentSongId();
+        var currentSongId = '';
+        try {
+            if (window.ytResults && window.ytResults[window.currentIndex]) {
+                currentSongId = window.ytResults[window.currentIndex].id.videoId || '';
+            }
+        } catch(e) {}
         if (!currentSongId) return;
-        if (currentSongId === populatedForSongId) return; // already done for this song
+        if (currentSongId === populatedForSongId) return;
 
-        var artistName = getCurrentArtist();
+        var targets = getArtistTargets();
+        if (targets.length === 0) targets = [''];
 
-        // Filter: belongs to artist, real song, not bad word
+        // Filter pool: belongs to artist, no bad words, not played
         var candidates = pool.filter(function(s) {
             if (!s || !s.id) return false;
             if (hasBadWord(s.title)) return false;
-            if (belongsToArtist(s, artistName)) return true;
-            // Allow features from the pool that title mentions this artist
+            if (targets[0] && belongsToArtist(s, targets)) return true;
             return false;
         });
 
@@ -3377,54 +3406,55 @@ document.addEventListener('DOMContentLoaded', function() {
             return playedInEndScreen.indexOf(s.id) < 0;
         });
 
-        // If not enough fresh, reset the played list and use candidates
+        // If not enough FRESH candidates → reset played list (only for candidates)
         if (fresh.length < 4) {
-            playedInEndScreen = [];
-            savePlayed();
+            // Try to reset played list and use candidates again
+            candidates.forEach(function(s) { playedInEndScreen = playedInEndScreen.filter(function(id){ return id !== s.id; }); });
             fresh = candidates.slice();
         }
 
-        // If still not enough, fall back to whole pool (any song from Similar Songs)
+        // Only if artist has < 4 songs in pool, fall back to broader pool
+        // BUT still filter by "not bad word" and "targets somewhere in title/uploader"
         if (fresh.length < 4) {
             fresh = pool.filter(function(s) {
-                return !hasBadWord(s.title) && playedInEndScreen.indexOf(s.id) < 0;
+                if (!s || !s.id) return false;
+                if (hasBadWord(s.title)) return false;
+                if (targets[0] && belongsToArtist(s, targets)) return true;
+                return false;
             });
         }
 
+        // Final fallback: if artist has NOTHING in the pool, use general pool
         if (fresh.length < 4) {
-            // Last resort: any song
-            fresh = pool.slice();
+            fresh = pool.filter(function(s) {
+                return !hasBadWord(s.title);
+            });
         }
 
         if (fresh.length < 4) return;
 
-        // Shuffle fresh and pick 4
         fresh.sort(function() { return Math.random() - 0.5; });
         var picks = fresh.slice(0, 4);
 
-        // Remember them as played
         picks.forEach(function(p) {
             if (playedInEndScreen.indexOf(p.id) < 0) playedInEndScreen.push(p.id);
         });
         savePlayed();
 
-        // Render
         renderCards(picks);
         populatedForSongId = currentSongId;
 
-        console.log('[ES] Populated 4 songs by', artistName, '| pool size:', candidates.length);
+        console.log('[ES] Targets:', targets, '| Pool matched:', candidates.length, '| Picked:', picks.length);
     }
 
-    // Poll to populate when overlay shows
     setInterval(function() {
         var ov = document.getElementById('endScreenOverlay');
-        if (ov && ov.classList.contains('show')) {
+        if (!ov) return;
+        if (ov.classList.contains('show')) {
             populate();
-        }
-        // When overlay is hidden, reset the "populatedForSongId" so next time it re-populates
-        if (ov && !ov.classList.contains('show')) {
+        } else {
             populatedForSongId = null;
         }
     }, 800);
 })();
-// END END SCREEN ARTIST POPULATE
+// END END SCREEN ARTIST POPULATE - V2
