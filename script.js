@@ -2777,3 +2777,53 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 500);
 })();
 // END END SCREEN OVERLAY - SHOW/HIDE
+
+// END SCREEN OVERLAY - POPULATE CARDS
+(function() {
+    function populateEndScreen() {
+        var c1 = document.getElementById('esCard1');
+        var c2 = document.getElementById('esCard2');
+        var av = document.getElementById('esAvatar');
+        if (!c1 || !c2 || !av) return;
+
+        var pool = window.simPool || [];
+        if (pool.length < 2) return;
+
+        var s1 = pool[0];
+        var s2 = pool[1];
+
+        // Card 1 (top-right)
+        c1.innerHTML =
+            '<img class="es-thumb" src="' + (s1.thumbnail || '') + '" onerror="this.style.opacity=0.3">' +
+            '<div class="es-title">' + (s1.title || 'Unknown').replace(/</g, '&lt;') + '</div>' +
+            '<div class="es-duration">▶ Play</div>';
+
+        // Card 2 (bottom-right)
+        c2.innerHTML =
+            '<img class="es-thumb" src="' + (s2.thumbnail || '') + '" onerror="this.style.opacity=0.3">' +
+            '<div class="es-title">' + (s2.title || 'Unknown').replace(/</g, '&lt;') + '</div>' +
+            '<div class="es-duration">▶ Play</div>';
+
+        // Avatar (bottom-left)
+        var artistName = '';
+        try {
+            if (window.ytResults && window.ytResults[window.currentIndex]) {
+                artistName = window.ytResults[window.currentIndex].snippet.channelTitle || '';
+            }
+        } catch(e) {}
+        var avatarImg = 'https://ui-avatars.com/api/?name=' +
+            encodeURIComponent(artistName || 'X') + '&background=00e0d0&color=000&size=200';
+        av.innerHTML = '<img src="' + avatarImg + '" onerror="this.src=\'https://ui-avatars.com/api/?name=X&background=00e0d0&color=000&size=200\'">';
+
+        console.log('[ES] Populated cards with', s1.title, 'and', s2.title);
+    }
+
+    // Populate whenever the overlay is shown
+    setInterval(function() {
+        var ov = document.getElementById('endScreenOverlay');
+        if (ov && ov.classList.contains('show')) {
+            populateEndScreen();
+        }
+    }, 1000);
+})();
+// END END SCREEN OVERLAY - POPULATE CARDS
