@@ -746,28 +746,9 @@ body { background: #050505 !important; }
 
 /* MY PLAYLIST - Favorites row */
 #plFavRow::-webkit-scrollbar { display: none; }
-.pl-fav-card {
-    flex: 0 0 auto;
-    width: 55px;
-    cursor: pointer;
-    position: relative;
-}
-.pl-fav-card img {
-    width: 55px; height: 55px;
-    border-radius: 8px;
-    object-fit: cover;
-    display: block;
-    border: 1px solid rgba(0, 224, 208, 0.2);
-}
-.pl-fav-card .pl-fav-title {
-    font-size: 9px;
-    color: #ccc;
-    margin-top: 3px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 55px;
-}
+
+
+
 .pl-fav-card:active { transform: scale(0.92); }
 .pl-fav-remove {
     position: absolute;
@@ -786,32 +767,12 @@ body { background: #050505 !important; }
     line-height: 1;
     padding: 0;
 }
-.pl-fav-empty {
-    color: #666;
-    font-size: 12px;
-    padding: 8px 0;
-    font-style: italic;
-    min-width: 100%;
-}
+
 
 /* MY PLAYLIST - Favorites row */
 #plFavRow::-webkit-scrollbar { display: none; }
-.pl-fav-card {
-    flex: 0 0 auto;
-    width: 62px;
-    cursor: pointer;
-    position: relative;
-    user-select: none;
-    -webkit-user-select: none;
-}
-.pl-fav-card img {
-    width: 62px; height: 62px;
-    border-radius: 10px;
-    object-fit: cover;
-    display: block;
-    border: 1px solid rgba(0, 224, 208, 0.25);
-    transition: transform 0.2s ease, border-color 0.2s ease;
-}
+
+
 .pl-fav-card:active img {
     transform: scale(0.92);
     border-color: #00e0d0;
@@ -821,22 +782,8 @@ body { background: #050505 !important; }
     border-color: #00e0d0;
     box-shadow: 0 0 20px rgba(0, 224, 208, 0.6);
 }
-.pl-fav-card .pl-fav-title {
-    font-size: 10px;
-    color: #ccc;
-    margin-top: 4px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 62px;
-}
-.pl-fav-empty {
-    color: #666;
-    font-size: 12px;
-    padding: 8px 0;
-    font-style: italic;
-    min-width: 100%;
-}
+
+
 
 /* Long-press popup menu */
 #favMenu {
@@ -938,99 +885,96 @@ body { background: #050505 !important; }
 }
 
 /* Disable Chrome's native long-press menu on favorite cards */
-.pl-fav-card, .pl-fav-card img {
-    -webkit-touch-callout: none !important;
-    -webkit-user-select: none !important;
-    user-select: none !important;
-    -webkit-tap-highlight-color: transparent !important;
-    pointer-events: auto !important;
-}
-.pl-fav-card img {
-    pointer-events: none !important;
-}
+.pl-fav-card, 
 
-/* ===== FAVORITES - SWIPE-LEFT ACTION PANEL ===== */
+
+
+
+
+/* ===== FAVORITES - SWIPE ACTIONS (bigger, tappable) ===== */
 #plFavRow {
-    padding: 8px 18px !important;
+    padding: 10px 18px !important;
 }
 .pl-fav-wrap {
     flex: 0 0 auto;
     position: relative;
-    width: 62px;
-    height: 84px;
+    width: 90px;
+    height: 130px;
     overflow: hidden;
-    border-radius: 10px;
+    border-radius: 12px;
 }
 .pl-fav-card {
     position: absolute !important;
     top: 0; left: 0;
-    width: 62px !important;
-    height: 84px;
+    width: 90px !important;
+    height: 130px;
     background: #050508;
-    border-radius: 10px;
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 2;
     touch-action: pan-y;
     will-change: transform;
 }
 .pl-fav-card.swiped {
-    transform: translateX(-124px);
+    transform: translateX(-216px);
 }
 .pl-fav-card img {
-    width: 62px;
-    height: 62px;
-    border-radius: 10px;
+    width: 90px;
+    height: 90px;
+    border-radius: 12px;
     object-fit: cover;
     display: block;
     border: 1px solid rgba(0, 224, 208, 0.25);
     pointer-events: none;
 }
 .pl-fav-card .pl-fav-title {
-    font-size: 10px;
+    font-size: 11px;
     color: #ccc;
-    margin-top: 4px;
+    margin-top: 5px;
+    padding: 0 3px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 62px;
+    max-width: 90px;
     pointer-events: none;
+    text-align: center;
 }
-/* Actions that appear behind the card */
 .pl-fav-actions {
     position: absolute;
     top: 0; right: 0;
-    height: 62px;
+    height: 90px;
     display: flex;
-    gap: 4px;
+    gap: 8px;
     padding: 4px;
     z-index: 1;
     align-items: center;
 }
 .pl-fav-action {
-    width: 38px;
-    height: 50px;
-    border-radius: 8px;
+    width: 48px;
+    height: 80px;
+    border-radius: 10px;
     border: none;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 4px;
     cursor: pointer;
     font-family: inherit;
     color: #fff;
-    font-size: 9px;
-    font-weight: bold;
+    font-size: 10px;
+    font-weight: 700;
     padding: 0;
     transition: all 0.15s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
-.pl-fav-action .ico { font-size: 18px; line-height: 1; }
+.pl-fav-action .ico { font-size: 22px; line-height: 1; }
 .pl-fav-action.play { background: linear-gradient(135deg, #00e0d0, #008f85); color: #000; }
-.pl-fav-action.queue { background: rgba(0, 224, 208, 0.25); border: 1px solid rgba(0,224,208,0.5); }
-.pl-fav-action.share { background: rgba(100, 150, 255, 0.25); border: 1px solid rgba(100,150,255,0.5); }
-.pl-fav-action.remove { background: rgba(255, 77, 77, 0.3); border: 1px solid rgba(255,77,77,0.6); }
-.pl-fav-action:active { transform: scale(0.9); }
-
+.pl-fav-action.queue { background: rgba(0, 224, 208, 0.3); border: 1.5px solid rgba(0,224,208,0.6); }
+.pl-fav-action.share { background: rgba(100, 150, 255, 0.3); border: 1.5px solid rgba(100,150,255,0.6); }
+.pl-fav-action.remove { background: rgba(255, 77, 77, 0.35); border: 1.5px solid rgba(255,77,77,0.7); }
+.pl-fav-action:active { transform: scale(0.85); }
 .pl-fav-empty {
     color: #666;
     font-size: 12px;
