@@ -743,3 +743,53 @@ body { background: #050505 !important; }
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* MY PLAYLIST - Favorites row */
+#plFavRow::-webkit-scrollbar { display: none; }
+.pl-fav-card {
+    flex: 0 0 auto;
+    width: 55px;
+    cursor: pointer;
+    position: relative;
+}
+.pl-fav-card img {
+    width: 55px; height: 55px;
+    border-radius: 8px;
+    object-fit: cover;
+    display: block;
+    border: 1px solid rgba(0, 224, 208, 0.2);
+}
+.pl-fav-card .pl-fav-title {
+    font-size: 9px;
+    color: #ccc;
+    margin-top: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 55px;
+}
+.pl-fav-card:active { transform: scale(0.92); }
+.pl-fav-remove {
+    position: absolute;
+    top: -5px; right: -5px;
+    background: #ff4d4d;
+    color: #fff;
+    border: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+}
+.pl-fav-empty {
+    color: #666;
+    font-size: 12px;
+    padding: 8px 0;
+    font-style: italic;
+    min-width: 100%;
+}
