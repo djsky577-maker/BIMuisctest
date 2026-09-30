@@ -2815,6 +2815,23 @@ document.addEventListener('DOMContentLoaded', function() {
         return '';
     }
 
+    function playCardFromData(song) {
+        if (!song) return;
+        var queue = [song].map(function(x) {
+            return {
+                id: { videoId: x.id },
+                snippet: {
+                    title: x.title,
+                    channelTitle: x.uploaderName,
+                    thumbnails: { default: { url: x.thumbnail }, high: { url: x.thumbnail } }
+                }
+            };
+        });
+        window.ytResults = queue;
+        window.playQueue = queue;
+        if (typeof window.playYoutube === 'function') window.playYoutube(0);
+    }
+
     function playCard(index) {
         var pool = window.simPool || [];
         if (pool.length < 1) return;
@@ -2847,14 +2864,15 @@ document.addEventListener('DOMContentLoaded', function() {
         cards.forEach(function(c) {
             var s = pool[c.idx];
             if (!c.el || !s) return;
+            if (c.el._songData && c.el._songData.id === s.id) return;
+            c.el._songData = s;
             c.el.innerHTML =
                 '<img class="es-thumb" src="' + (s.thumbnail || '') + '" onerror="this.style.opacity=0.3">' +
                 '<div class="es-title">' + (s.title || 'Unknown').replace(/</g, '&lt;') + '</div>';
-            // Click handler
             c.el.onclick = function(e) {
                 e.stopPropagation();
                 e.preventDefault();
-                playCard(c.idx);
+                playCardFromData(c.el._songData);
             };
         });
 
@@ -3215,27 +3233,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function playAutoSelected(idx) {
-        var pool = window.simPool || [];
-        if (pool.length <= idx) return;
-        var queue = pool.map(function(x) {
+        var cards = getCards();
+        var card = cards[idx];
+        if (!card || !card._songData) return;
+        var song = card._songData;
+        var queue = [song].map(function(x) {
             return {
                 id: { videoId: x.id },
                 snippet: {
                     title: x.title,
-                    channelTitle: x.uploaderName,
+                    channelTitle: x.uploaderName || '',
                     thumbnails: { default: { url: x.thumbnail }, high: { url: x.thumbnail } }
                 }
             };
         });
         window.ytResults = queue;
         window.playQueue = queue;
-        if (typeof window.playYoutube === 'function') window.playYoutube(idx);
-        console.log('[ES] Playing auto-selected song', idx + 1);
+        if (typeof window.playYoutube === 'function') window.playYoutube(0);
+        console.log('[ES] Playing auto-selected:', song.title);
 
         var ov = document.getElementById('endScreenOverlay');
         if (ov) ov.classList.remove('show');
 
-        // Clean up so next video is fresh
         clearAllStates();
         autoSelectStarted = false;
         autoSelectCancelled = false;
