@@ -2778,82 +2778,55 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 // END END SCREEN OVERLAY - SHOW/HIDE
 
-// END SCREEN OVERLAY - POPULATE CARDS
+
+
+
+
+// END SCREEN OVERLAY - PREMIUM 4 CORNERS
 (function() {
-    function populateEndScreen() {
-        var c1 = document.getElementById('esCard1');
-        var c2 = document.getElementById('esCard2');
-        var av = document.getElementById('esAvatar');
-        if (!c1 || !c2 || !av) return;
-
+    function populate() {
         var pool = window.simPool || [];
-        if (pool.length < 2) return;
+        if (pool.length < 4) return;
 
-        var s1 = pool[0];
-        var s2 = pool[1];
+        var cards = [
+            document.getElementById('esCard1'),
+            document.getElementById('esCard2'),
+            document.getElementById('esCard3'),
+            document.getElementById('esCard4')
+        ];
 
-        // Card 1 (top-right)
-        c1.innerHTML =
-            '<img class="es-thumb" src="' + (s1.thumbnail || '') + '" onerror="this.style.opacity=0.3">' +
-            '<div class="es-title">' + (s1.title || 'Unknown').replace(/</g, '&lt;') + '</div>' +
-            '<div class="es-duration">▶ Play</div>';
+        for (var i = 0; i < 4; i++) {
+            var c = cards[i];
+            var s = pool[i];
+            if (!c || !s) continue;
+            c.innerHTML =
+                '<img class="es-thumb" src="' + (s.thumbnail || '') + '" onerror="this.style.opacity=0.3">' +
+                '<div class="es-title">' + (s.title || 'Unknown').replace(/</g, '&lt;') + '</div>';
+        }
 
-        // Card 2 (bottom-right)
-        c2.innerHTML =
-            '<img class="es-thumb" src="' + (s2.thumbnail || '') + '" onerror="this.style.opacity=0.3">' +
-            '<div class="es-title">' + (s2.title || 'Unknown').replace(/</g, '&lt;') + '</div>' +
-            '<div class="es-duration">▶ Play</div>';
+        // Avatar - current artist
+        var av = document.getElementById('esAvatar');
+        if (av) {
+            var artistName = '';
+            try {
+                if (window.ytResults && window.ytResults[window.currentIndex]) {
+                    artistName = window.ytResults[window.currentIndex].snippet.channelTitle || '';
+                }
+            } catch(e) {}
+            var avatarImg = 'https://ui-avatars.com/api/?name=' +
+                encodeURIComponent(artistName || 'X') + '&background=00e0d0&color=000&size=200';
+            av.innerHTML = '<img src="' + avatarImg + '" onerror="this.src=\'https://ui-avatars.com/api/?name=X&background=00e0d0&color=000&size=200\'">';
+        }
 
-        // Avatar (bottom-left)
-        var artistName = '';
-        try {
-            if (window.ytResults && window.ytResults[window.currentIndex]) {
-                artistName = window.ytResults[window.currentIndex].snippet.channelTitle || '';
-            }
-        } catch(e) {}
-        var avatarImg = 'https://ui-avatars.com/api/?name=' +
-            encodeURIComponent(artistName || 'X') + '&background=00e0d0&color=000&size=200';
-        av.innerHTML = '<img src="' + avatarImg + '" onerror="this.src=\'https://ui-avatars.com/api/?name=X&background=00e0d0&color=000&size=200\'">';
-
-        console.log('[ES] Populated cards with', s1.title, 'and', s2.title);
+        console.log('[ES] Populated 4 cards + avatar');
     }
 
-    // Populate whenever the overlay is shown
+    // Populate when overlay shows
     setInterval(function() {
         var ov = document.getElementById('endScreenOverlay');
         if (ov && ov.classList.contains('show')) {
-            populateEndScreen();
+            populate();
         }
-    }, 1000);
+    }, 800);
 })();
-// END END SCREEN OVERLAY - POPULATE CARDS
-
-// ES MANUAL TEST
-setTimeout(function() {
-    var btn = document.createElement('button');
-    btn.id = 'esTestBtn';
-    btn.innerHTML = '🧪 TEST ES';
-    btn.style.cssText = 'position:fixed;top:100px;left:10px;z-index:2147483647;background:#00e0d0;color:#000;border:none;padding:10px;border-radius:20px;font-weight:bold;font-size:12px;';
-    btn.onclick = function() {
-        var ov = document.getElementById('endScreenOverlay');
-        if (!ov) return alert('Overlay HTML missing!');
-        var pool = window.simPool || [];
-        var status = 'simPool length: ' + pool.length + '\n';
-        if (pool[0]) status += 'Song 1: ' + pool[0].title + '\n';
-        if (pool[1]) status += 'Song 2: ' + pool[1].title;
-        alert(status);
-        // Manually populate
-        var c1 = document.getElementById('esCard1');
-        var c2 = document.getElementById('esCard2');
-        if (pool[0]) {
-            c1.innerHTML = '<img class="es-thumb" src="' + pool[0].thumbnail + '"><div class="es-title">' + pool[0].title + '</div>';
-        }
-        if (pool[1]) {
-            c2.innerHTML = '<img class="es-thumb" src="' + pool[1].thumbnail + '"><div class="es-title">' + pool[1].title + '</div>';
-        }
-        ov.classList.add('show');
-    };
-    document.body.appendChild(btn);
-    console.log('[ES TEST] Test button added');
-}, 3000);
-// END ES MANUAL TEST
+// END END SCREEN OVERLAY - PREMIUM 4 CORNERS

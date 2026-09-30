@@ -1099,33 +1099,115 @@ body { background: #050505 !important; }
 }
 
 /* Cards inside the small box - scaled down */
-#fullArtBox .es-card {
-    width: 40% !important;
-    max-width: 140px !important;
-    right: 6px !important;
-    border-radius: 6px !important;
-    border-width: 1px !important;
-}
-#fullArtBox .es-card-top { top: 6px !important; }
-#fullArtBox .es-card-bot { bottom: 6px !important; }
-#fullArtBox .es-card .es-title {
-    font-size: 8px !important;
-    top: 4px !important;
-    left: 5px !important;
-    right: 25px !important;
-}
-#fullArtBox .es-card .es-duration {
-    font-size: 7px !important;
-    bottom: 3px !important;
-    right: 3px !important;
-    padding: 1px 3px !important;
-}
+#fullArtBox 
+#fullArtBox 
+#fullArtBox 
+#fullArtBox 
+#fullArtBox 
 
 /* Avatar inside the small box - scaled down */
+#fullArtBox 
+
+/* ===== END SCREEN OVERLAY - PREMIUM 4 CORNERS ===== */
+#fullArtBox .es-overlay {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 999 !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    background: rgba(0, 0, 0, 0.55) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.45s ease;
+    pointer-events: none;
+}
+#fullArtBox .es-overlay.show {
+    display: block !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+/* 4 corner cards - premium look */
+#fullArtBox .es-card {
+    position: absolute;
+    width: 32%;
+    aspect-ratio: 16 / 9;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    background: #000;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.85), 0 0 0 1.5px rgba(255, 255, 255, 0.9);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    animation: esCardIn 0.5s ease both;
+}
+#fullArtBox .es-card:active {
+    transform: scale(0.94);
+    box-shadow: 0 6px 24px rgba(0, 224, 208, 0.6), 0 0 0 2px #00e0d0;
+}
+#fullArtBox .es-card-tl { top: 5%; left: 4%; animation-delay: 0.05s; }
+#fullArtBox .es-card-tr { top: 5%; right: 4%; animation-delay: 0.1s; }
+#fullArtBox .es-card-bl { bottom: 5%; left: 4%; animation-delay: 0.15s; }
+#fullArtBox .es-card-br { bottom: 5%; right: 4%; animation-delay: 0.2s; }
+
+@keyframes esCardIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+#fullArtBox .es-card .es-thumb {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+}
+#fullArtBox .es-card .es-title {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.15;
+    padding: 12px 5px 4px 5px;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    pointer-events: none;
+}
+
+/* Artist avatar - centered, premium */
 #fullArtBox .es-avatar {
-    width: 18% !important;
-    max-width: 70px !important;
-    bottom: 6px !important;
-    left: 6px !important;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.9) !important;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 26%;
+    aspect-ratio: 1 / 1;
+    max-width: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    z-index: 2;
+    background: #111;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.9), 0 0 0 3px rgba(255, 255, 255, 0.95), 0 0 25px rgba(0, 224, 208, 0.5);
+    transition: transform 0.25s ease;
+    animation: esAvatarIn 0.5s ease both;
+}
+#fullArtBox .es-avatar:active {
+    transform: translate(-50%, -50%) scale(0.93);
+}
+#fullArtBox .es-avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+}
+@keyframes esAvatarIn {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
