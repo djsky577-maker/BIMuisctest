@@ -2784,112 +2784,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-// END SCREEN OVERLAY - PREMIUM 4 CORNERS + CLICK
-(function() {
-    function getCurrentArtist() {
-        try {
-            if (window.ytResults && window.ytResults[window.currentIndex]) {
-                return window.ytResults[window.currentIndex].snippet.channelTitle || '';
-            }
-        } catch(e) {}
-        return '';
-    }
 
-    // Fetch real artist avatar via YouTube channel search
-    async function fetchArtistAvatar(artistName) {
-        if (!artistName || !window.pget) return '';
-        try {
-            var d = await window.pget('/search?q=' + encodeURIComponent(artistName) + '&filter=channels');
-            var items = (d.items || []).slice(0, 5);
-            var nm = artistName.toLowerCase().replace(/vevo|official|topic|\s*-\s*topic/gi, '').trim();
-            // Try to find a channel whose name closely matches
-            for (var i = 0; i < items.length; i++) {
-                var cn = (items[i].name || '').toLowerCase().replace(/vevo|official|topic|\s*-\s*topic/gi, '').trim();
-                if (cn === nm || cn.indexOf(nm) === 0 || nm.indexOf(cn) === 0) {
-                    if (items[i].thumbnail) return items[i].thumbnail;
-                }
-            }
-            // Fallback: first channel result
-            if (items[0] && items[0].thumbnail) return items[0].thumbnail;
-        } catch(e) {}
-        return '';
-    }
-
-    function playCardFromData(song) {
-        if (!song) return;
-        var queue = [song].map(function(x) {
-            return {
-                id: { videoId: x.id },
-                snippet: {
-                    title: x.title,
-                    channelTitle: x.uploaderName,
-                    thumbnails: { default: { url: x.thumbnail }, high: { url: x.thumbnail } }
-                }
-            };
-        });
-        window.ytResults = queue;
-        window.playQueue = queue;
-        if (typeof window.playYoutube === 'function') window.playYoutube(0);
-    }
-
-    function playCard(index) {
-        var pool = window.simPool || [];
-        if (pool.length < 1) return;
-        var queue = pool.map(function(x) {
-            return {
-                id: { videoId: x.id },
-                snippet: {
-                    title: x.title,
-                    channelTitle: x.uploaderName,
-                    thumbnails: { default: { url: x.thumbnail }, high: { url: x.thumbnail } }
-                }
-            };
-        });
-        window.ytResults = queue;
-        window.playQueue = queue;
-        if (typeof window.playYoutube === 'function') window.playYoutube(index);
-    }
-
-    function populate() {
-        var pool = window.simPool || [];
-        if (pool.length < 4) return;
-
-        var cards = [
-            { el: document.getElementById('esCard1'), idx: 0 },
-            { el: document.getElementById('esCard2'), idx: 1 },
-            { el: document.getElementById('esCard3'), idx: 2 },
-            { el: document.getElementById('esCard4'), idx: 3 }
-        ];
-
-        cards.forEach(function(c) {
-            var s = pool[c.idx];
-            if (!c.el || !s) return;
-            if (c.el._songData && c.el._songData.id === s.id) return;
-            c.el._songData = s;
-            c.el.innerHTML =
-                '<img class="es-thumb" src="' + (s.thumbnail || '') + '" onerror="this.style.opacity=0.3">' +
-                '<div class="es-title">' + (s.title || 'Unknown').replace(/</g, '&lt;') + '</div>';
-            c.el.onclick = function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-                playCardFromData(c.el._songData);
-            };
-        });
-
-        // (avatar is now handled by the side panel)
-
-        console.log('[ES] Populated 4 cards + avatar');
-    }
-
-    // Populate when overlay shows
-    setInterval(function() {
-        var ov = document.getElementById('endScreenOverlay');
-        if (ov && ov.classList.contains('show')) {
-            populate();
-        }
-    }, 800);
-})();
-// END END SCREEN OVERLAY - PREMIUM 4 CORNERS + CLICK
 
 
 
@@ -3336,3 +3231,200 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 300);
 })();
 // END AUTO SELECT
+
+// END SCREEN ARTIST POPULATE
+(function() {
+    var playedInEndScreen = [];         // memory: songs already shown
+    var PLAYED_KEY = 'bi_es_played';    // localStorage key
+    var populatedForSongId = null;      // which song we last populated for
+
+    // Load played list from storage
+    try {
+        var raw = localStorage.getItem(PLAYED_KEY);
+        playedInEndScreen = raw ? JSON.parse(raw) : [];
+    } catch(e) { playedInEndScreen = []; }
+
+    function savePlayed() {
+        try { localStorage.setItem(PLAYED_KEY, JSON.stringify(playedInEndScreen.slice(-100))); } catch(e) {}
+    }
+
+    // Bad words to filter out (talking/non-song videos)
+    var BAD_WORDS = [
+        'interview', 'podcast', 'reaction', 'behind the scenes', 'behind-the-scenes',
+        'vlog', 'trailer', 'teaser', 'documentary', 'explained', 'unboxing',
+        'review', 'talking', 'highlights', 'breaking news', 'news', 'conference',
+        'speech', 'standup', 'stand-up', 'comedy', 'compilation of', 'q&a',
+        'q & a', 'q and a', 'ama', 'ama ', 'on the street', 'first listen',
+        'live stream chat', 'lofi', 'study', 'sleep', 'relax', 'meditation'
+    ];
+
+    function hasBadWord(text) {
+        if (!text) return false;
+        var t = text.toLowerCase();
+        for (var i = 0; i < BAD_WORDS.length; i++) {
+            if (t.indexOf(BAD_WORDS[i]) >= 0) return true;
+        }
+        return false;
+    }
+
+    function getCurrentArtist() {
+        try {
+            if (window.ytResults && window.ytResults[window.currentIndex]) {
+                return window.ytResults[window.currentIndex].snippet.channelTitle || '';
+            }
+        } catch(e) {}
+        return '';
+    }
+
+    function getCurrentSongId() {
+        try {
+            if (window.ytResults && window.ytResults[window.currentIndex]) {
+                return window.ytResults[window.currentIndex].id.videoId || '';
+            }
+        } catch(e) {}
+        return '';
+    }
+
+    // Check if a song belongs to the artist (by uploader or by "ft." in title)
+    function belongsToArtist(song, artistName) {
+        if (!artistName) return false;
+        var nm = artistName.toLowerCase()
+            .replace(/vevo|official|topic|\s*-\s*topic/gi, '')
+            .trim();
+        if (!nm) return false;
+
+        var uploader = (song.uploaderName || '').toLowerCase();
+        // Match uploader (or partial)
+        if (uploader.indexOf(nm) >= 0 || nm.indexOf(uploader.replace(/\s*-\s*topic$/,'')) >= 0) {
+            return true;
+        }
+
+        // Match first word of artist in title (e.g. "Omah" in "Omah Lay")
+        var firstWord = nm.split(' ')[0];
+        if (firstWord.length >= 4) {
+            var title = (song.title || '').toLowerCase();
+            // If artist's first word appears in the title, and it's a real song → count
+            if (title.indexOf(firstWord) >= 0) return true;
+        }
+
+        return false;
+    }
+
+    function getCards() {
+        return [
+            document.getElementById('esCard1'),
+            document.getElementById('esCard2'),
+            document.getElementById('esCard3'),
+            document.getElementById('esCard4')
+        ];
+    }
+
+    function renderCards(picks) {
+        var cards = getCards();
+        cards.forEach(function(el, i) {
+            if (!el) return;
+            var s = picks[i];
+            el._songData = s;
+            el.innerHTML =
+                '<img class="es-thumb" src="' + (s.thumbnail || '') + '" onerror="this.style.opacity=0.3">' +
+                '<div class="es-title">' + (s.title || 'Unknown').replace(/</g, '&lt;') + '</div>';
+            el.onclick = function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                playFromCard(el._songData);
+            };
+        });
+    }
+
+    function playFromCard(song) {
+        if (!song) return;
+        var queue = [song].map(function(x) {
+            return {
+                id: { videoId: x.id },
+                snippet: {
+                    title: x.title,
+                    channelTitle: x.uploaderName || '',
+                    thumbnails: { default: { url: x.thumbnail }, high: { url: x.thumbnail } }
+                }
+            };
+        });
+        window.ytResults = queue;
+        window.playQueue = queue;
+        if (typeof window.playYoutube === 'function') window.playYoutube(0);
+    }
+
+    function populate() {
+        var pool = window.simPool || [];
+        if (pool.length < 4) return;
+
+        var currentSongId = getCurrentSongId();
+        if (!currentSongId) return;
+        if (currentSongId === populatedForSongId) return; // already done for this song
+
+        var artistName = getCurrentArtist();
+
+        // Filter: belongs to artist, real song, not bad word
+        var candidates = pool.filter(function(s) {
+            if (!s || !s.id) return false;
+            if (hasBadWord(s.title)) return false;
+            if (belongsToArtist(s, artistName)) return true;
+            // Allow features from the pool that title mentions this artist
+            return false;
+        });
+
+        // Remove already-played
+        var fresh = candidates.filter(function(s) {
+            return playedInEndScreen.indexOf(s.id) < 0;
+        });
+
+        // If not enough fresh, reset the played list and use candidates
+        if (fresh.length < 4) {
+            playedInEndScreen = [];
+            savePlayed();
+            fresh = candidates.slice();
+        }
+
+        // If still not enough, fall back to whole pool (any song from Similar Songs)
+        if (fresh.length < 4) {
+            fresh = pool.filter(function(s) {
+                return !hasBadWord(s.title) && playedInEndScreen.indexOf(s.id) < 0;
+            });
+        }
+
+        if (fresh.length < 4) {
+            // Last resort: any song
+            fresh = pool.slice();
+        }
+
+        if (fresh.length < 4) return;
+
+        // Shuffle fresh and pick 4
+        fresh.sort(function() { return Math.random() - 0.5; });
+        var picks = fresh.slice(0, 4);
+
+        // Remember them as played
+        picks.forEach(function(p) {
+            if (playedInEndScreen.indexOf(p.id) < 0) playedInEndScreen.push(p.id);
+        });
+        savePlayed();
+
+        // Render
+        renderCards(picks);
+        populatedForSongId = currentSongId;
+
+        console.log('[ES] Populated 4 songs by', artistName, '| pool size:', candidates.length);
+    }
+
+    // Poll to populate when overlay shows
+    setInterval(function() {
+        var ov = document.getElementById('endScreenOverlay');
+        if (ov && ov.classList.contains('show')) {
+            populate();
+        }
+        // When overlay is hidden, reset the "populatedForSongId" so next time it re-populates
+        if (ov && !ov.classList.contains('show')) {
+            populatedForSongId = null;
+        }
+    }, 800);
+})();
+// END END SCREEN ARTIST POPULATE
