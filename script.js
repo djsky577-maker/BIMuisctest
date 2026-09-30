@@ -2639,3 +2639,266 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(renderFavs, 2000);
 })();
 // END MY PLAYLIST - FAVORITES
+
+// MY PLAYLIST - FAVORITES (with long-press menu)
+(function() {
+    var FAV_KEY = 'bi_my_favorites';
+
+    function loadFavs() {
+        try {
+            var raw = localStorage.getItem(FAV_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch(e) { return []; }
+    }
+    function saveFavs(list) {
+        try { localStorage.setItem(FAV_KEY, JSON.stringify(list)); } catch(e) {}
+    }
+
+    function injectFavMenu() {
+        if (document.getElementById('favMenu')) return;
+        var menu = document.createElement('div');
+        menu.id = 'favMenu';
+        menu.innerHTML = '<div id="favMenuPanel"></div>';
+        document.body.appendChild(menu);
+        menu.addEventListener('click', function(e) {
+            if (e.target === menu) closeFavMenu();
+        });
+    }
+
+    function openFavMenu(song, index) {
+        injectFavMenu();
+        var panel = document.getElementById('favMenuPanel');
+        if (!panel) return;
+        panel.innerHTML =
+            '<div class="fav-menu-song-info">' +
+                '<img src="' + (song.thumbnail || '') + '" onerror="this.src=\'https://via.placeholder.com/100\'">' +
+                '<div class="fav-menu-song-text">' +
+                    '<div class="t">' + (song.title || 'Unknown').replace(/</g, '&lt;') + '</div>' +
+                    '<div class="a">' + (song.artist || 'Unknown').replace(/</g, '&lt;') + '</div>' +
+                '</div>' +
+            '</div>' +
+            '<button class="fav-menu-opt" data-action="play"><span class="ico">▶️</span> Play Now</button>' +
+            '<button class="fav-menu-opt" data-action="queue"><span class="ico">📋</span> Add to Queue</button>' +
+            '<button class="fav-menu-opt" data-action="share"><span class="ico">📤</span> Share</button>' +
+            '<button class="fav-menu-opt" data-action="info"><span class="ico">ℹ️</span> Song Info</button>' +
+            '<button class="fav-menu-opt danger" data-action="remove"><span class="ico">❌</span> Remove from Favorites</button>';
+
+        panel.querySelectorAll('.fav-menu-opt').forEach(function(btn) {
+            btn.onclick = function() {
+                var action = btn.getAttribute('data-action');
+                handleFavAction(action, song, index);
+                closeFavMenu();
+            };
+        });
+
+        document.getElementById('favMenu').classList.add('show');
+    }
+
+    function closeFavMenu() {
+        var m = document.getElementById('favMenu');
+        if (m) m.classList.remove('show');
+    }
+
+    function handleFavAction(action, song, index) {
+        if (action === 'play') {
+            var mock = {
+                id: { videoId: song.id },
+                snippet: {
+                    title: song.title,
+                    channelTitle: song.artist,
+                    thumbnails: { default: { url: song.thumbnail }, high: { url: song.thumbnail } }
+                }
+            };
+            window.ytResults = [mock];
+            window.playQueue = window.ytResults;
+            if (typeof window.playYoutube === 'function') window.playYoutube(0);
+        }
+        else if (action === 'queue') {
+            // Add to play queue as next song
+            try {
+                var q = window.playQueue || window.ytResults || [];
+                if (!Array.isArray(q)) q = [];
+                q.splice((window.currentIndex || 0) + 1, 0, {
+                    id: { videoId: song.id },
+                    snippet: {
+                        title: song.title,
+                        channelTitle: song.artist,
+                        thumbnails: { default: { url: song.thumbnail }, high: { url: song.thumbnail } }
+                    }
+                });
+                window.playQueue = q;
+                window.ytResults = q;
+                showFavToast('📋 Added to queue');
+            } catch(e) {
+                showFavToast('Could not queue');
+            }
+        }
+        else if (action === 'share') {
+            var url = 'https://www.youtube.com/watch?v=' + song.id;
+            try { navigator.clipboard.writeText(url); } catch(e) {}
+            if (navigator.share) {
+                navigator.share({ title: song.title, text: 'Listen to ' + song.title + ' on B.I Music!', url: url }).catch(function(){});
+            } else {
+                showFavToast('🔗 Link copied');
+            }
+        }
+        else if (action === 'info') {
+            alert('🎵 ' + song.title + '\n👤 ' + song.artist + '\n🔗 https://www.youtube.com/watch?v=' + song.id);
+        }
+        else if (action === 'remove') {
+            var favs = loadFavs();
+            favs = favs.filter(function(s) { return s.id !== song.id; });
+            saveFavs(favs);
+            renderFavs();
+            showFavToast('Removed from favorites');
+        }
+    }
+
+    function renderFavs() {
+        var row = document.getElementById('plFavRow');
+        if (!row) return;
+        var favorites = loadFavs();
+        if (favorites.length === 0) {
+            row.innerHTML = '<div class="pl-fav-empty">Tap ❤️ on any song to save it here. Long-press a song for more options.</div>';
+            return;
+        }
+        row.innerHTML = '';
+        favorites.forEach(function(s, i) {
+            var card = document.createElement('div');
+            card.className = 'pl-fav-card';
+            card.innerHTML =
+                '<img src="' + (s.thumbnail || '') + '" onerror="this.src=\'https://via.placeholder.com/100\'">' +
+                '<div class="pl-fav-title">' + (s.title || 'Unknown').replace(/</g, '&lt;') + '</div>';
+
+            // Tap = play
+            var tapTimer = null;
+            var longPressed = false;
+
+            card.addEventListener('touchstart', function() {
+                longPressed = false;
+                card.classList.add('longpressing');
+                tapTimer = setTimeout(function() {
+                    longPressed = true;
+                    card.classList.remove('longpressing');
+                    openFavMenu(s, i);
+                }, 550);
+            }, { passive: true });
+
+            card.addEventListener('touchend', function() {
+                card.classList.remove('longpressing');
+                clearTimeout(tapTimer);
+                if (!longPressed) {
+                    // Short tap → play
+                    handleFavAction('play', s, i);
+                }
+            });
+
+            card.addEventListener('touchmove', function() {
+                // Cancel long-press if user scrolls
+                clearTimeout(tapTimer);
+                card.classList.remove('longpressing');
+            }, { passive: true });
+
+            // Desktop fallback (mouse)
+            card.oncontextmenu = function(e) {
+                e.preventDefault();
+                openFavMenu(s, i);
+            };
+            card.onclick = function(e) {
+                if (e.detail === 0) return; // ignore synthesized
+                if (!('ontouchstart' in window)) handleFavAction('play', s, i);
+            };
+
+            row.appendChild(card);
+        });
+    }
+
+    function getCurrentSong() {
+        try {
+            if (window.currentSource === 'youtube' && window.ytResults && window.ytResults[window.currentIndex]) {
+                var t = window.ytResults[window.currentIndex];
+                return {
+                    id: t.id.videoId,
+                    title: t.snippet.title || '',
+                    artist: t.snippet.channelTitle || '',
+                    thumbnail: (t.snippet.thumbnails && t.snippet.thumbnails.high && t.snippet.thumbnails.high.url) || ''
+                };
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    // Heart button override
+    window.toggleLikeCurrent = function() {
+        var heart = document.getElementById('fullHeart');
+        var song = getCurrentSong();
+        if (!song || !song.id) return;
+
+        var favs = loadFavs();
+        var idx = favs.findIndex(function(s) { return s.id === song.id; });
+
+        if (idx >= 0) {
+            favs.splice(idx, 1);
+            saveFavs(favs);
+            if (heart) {
+                heart.classList.remove('liked');
+                heart.querySelectorAll('path').forEach(function(p) { p.style.fill = ''; });
+            }
+            showFavToast('Removed from favorites');
+        } else {
+            favs.push(song);
+            saveFavs(favs);
+            if (heart) {
+                heart.classList.add('liked');
+                heart.querySelectorAll('path').forEach(function(p) { p.style.fill = '#ff4d4d'; });
+            }
+            showFavToast('❤️ Saved to My Favorites');
+        }
+        renderFavs();
+    };
+
+    function showFavToast(msg) {
+        var old = document.getElementById('favToast');
+        if (old) old.parentNode.removeChild(old);
+        var t = document.createElement('div');
+        t.id = 'favToast';
+        t.textContent = msg;
+        t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#00e0d0,#008f85);color:#000;font-weight:bold;font-size:13px;padding:12px 20px;border-radius:25px;z-index:2147483647;box-shadow:0 10px 30px rgba(0,224,208,0.6);opacity:0;transition:opacity 0.3s ease;';
+        document.body.appendChild(t);
+        setTimeout(function() { t.style.opacity = '1'; }, 20);
+        setTimeout(function() {
+            t.style.opacity = '0';
+            setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 400);
+        }, 2200);
+    }
+
+    // Update heart state
+    setInterval(function() {
+        var heart = document.getElementById('fullHeart');
+        if (!heart) return;
+        var song = getCurrentSong();
+        if (!song || !song.id) return;
+        var favs = loadFavs();
+        var isFav = favs.some(function(s) { return s.id === song.id; });
+        if (isFav) {
+            heart.classList.add('liked');
+            heart.querySelectorAll('path').forEach(function(p) { p.style.fill = '#ff4d4d'; });
+        } else {
+            heart.classList.remove('liked');
+            heart.querySelectorAll('path').forEach(function(p) { p.style.fill = ''; });
+        }
+    }, 800);
+
+    // Refresh favorites when playlist tab opens
+    var lastVisible = false;
+    setInterval(function() {
+        var v = document.getElementById('view-library');
+        if (!v) return;
+        var isVisible = v.classList.contains('active');
+        if (isVisible && !lastVisible) renderFavs();
+        lastVisible = isVisible;
+    }, 500);
+
+    setTimeout(renderFavs, 2000);
+})();
+// END MY PLAYLIST - FAVORITES
