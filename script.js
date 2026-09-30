@@ -2517,6 +2517,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function closeAll() {
         document.querySelectorAll('.pl-fav-card.swiped').forEach(function(c) {
             c.classList.remove('swiped');
+            if (c.parentElement) c.parentElement.classList.remove('open');
         });
         openCard = null;
     }
@@ -2644,10 +2645,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Swiped left → open
                         closeAll();
                         card.classList.add('swiped');
+                        wrap.classList.add('open');
                         openCard = card;
                     } else if (dx > 40 && swiped) {
                         // Swiped right → close
                         card.classList.remove('swiped');
+                        wrap.classList.remove('open');
                         openCard = null;
                     }
                     return;
@@ -2657,6 +2660,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (swiped) {
                         // Tapping an open card just closes it
                         card.classList.remove('swiped');
+                        wrap.classList.remove('open');
                         openCard = null;
                     } else {
                         // Plain tap → play

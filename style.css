@@ -891,9 +891,13 @@ body { background: #050505 !important; }
 
 
 
-/* ===== FAVORITES - SWIPE ACTIONS (bigger, tappable) ===== */
+
+
+
+/* ===== FAVORITES - SWIPE ACTIONS (fixed) ===== */
 #plFavRow {
     padding: 10px 18px !important;
+    gap: 12px !important;
 }
 .pl-fav-wrap {
     flex: 0 0 auto;
@@ -902,6 +906,10 @@ body { background: #050505 !important; }
     height: 130px;
     overflow: hidden;
     border-radius: 12px;
+    transition: width 0.3s ease;
+}
+.pl-fav-wrap.open {
+    width: 306px; /* card 90 + actions 216 */
 }
 .pl-fav-card {
     position: absolute !important;
