@@ -2778,3 +2778,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 500);
 })();
 // END END SCREEN OVERLAY - SHOW/HIDE
+
+// END SCREEN DEBUG
+(function() {
+    setInterval(function() {
+        if (window.currentSource === 'youtube' && window.ytReady && window.ytPlayer && typeof window.ytPlayer.getCurrentTime === 'function') {
+            try {
+                var dur = window.ytPlayer.getDuration() || 0;
+                var cur = window.ytPlayer.getCurrentTime() || 0;
+                if (dur > 0) {
+                    var left = dur - cur;
+                    console.log('[ES DEBUG] src:', window.currentSource, '| dur:', dur.toFixed(1), '| cur:', cur.toFixed(1), '| left:', left.toFixed(1));
+                }
+            } catch(e) {
+                console.log('[ES DEBUG] error:', e.message);
+            }
+        } else {
+            console.log('[ES DEBUG] not ready: src=', window.currentSource, '| ytReady=', window.ytReady, '| has ytPlayer=', !!window.ytPlayer);
+        }
+    }, 2000);
+})();
+// END END SCREEN DEBUG
