@@ -2858,29 +2858,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         });
 
-        // Avatar - fetch real image from YouTube channel
-        var av = document.getElementById('esAvatar');
-        if (av) {
-            var artistName = getCurrentArtist();
-            // Show initials placeholder instantly
-            av.innerHTML = '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(artistName || 'X') + '&background=00e0d0&color=000&size=200">';
-            // Then load the real one async
-            if (artistName) {
-                fetchArtistAvatar(artistName).then(function(url) {
-                    if (url && av.querySelector('img')) {
-                        av.querySelector('img').src = url;
-                    }
-                }).catch(function(){});
-            }
-            // Click handler - open artist profile
-            av.onclick = function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-                if (artistName && typeof window.openArtistProfile === 'function') {
-                    window.openArtistProfile(artistName, av.querySelector('img') ? av.querySelector('img').src : '');
-                }
-            };
-        }
+        // (avatar is now handled by the side panel)
 
         console.log('[ES] Populated 4 cards + avatar');
     }
