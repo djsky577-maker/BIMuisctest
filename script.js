@@ -3103,3 +3103,174 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 2000);
 })();
 // END AVATAR FIX
+
+// AUTO SELECT - bounce ring on cards, pick random at end, play
+(function() {
+    var cyclingInterval = null;
+    var activeCardIdx = -1;
+    var autoSelectStarted = false;
+    var autoSelectCancelled = false;
+    var lastSongId = '';
+
+    function getCards() {
+        return [
+            document.getElementById('esCard1'),
+            document.getElementById('esCard2'),
+            document.getElementById('esCard3'),
+            document.getElementById('esCard4')
+        ];
+    }
+
+    function clearActive() {
+        getCards().forEach(function(c) {
+            if (c) c.classList.remove('autoselect-active');
+        });
+    }
+
+    function cycle() {
+        if (autoSelectCancelled) return;
+        var cards = getCards();
+        if (!cards[0]) return;
+
+        // If all 4 cards are populated, cycle between them
+        var availableIdx = [];
+        for (var i = 0; i < 4; i++) {
+            if (cards[i] && cards[i].innerHTML.trim().length > 0) availableIdx.push(i);
+        }
+        if (availableIdx.length === 0) return;
+
+        clearActive();
+        activeCardIdx = availableIdx[Math.floor(Math.random() * availableIdx.length)];
+        cards[activeCardIdx].classList.add('autoselect-active');
+    }
+
+    function startAutoSelect() {
+        if (autoSelectStarted) return;
+        autoSelectStarted = true;
+        autoSelectCancelled = false;
+        activeCardIdx = -1;
+        clearActive();
+
+        // Bounce every 450ms
+        cyclingInterval = setInterval(cycle, 450);
+        cycle(); // fire immediately
+
+        console.log('[ES] Auto-select started');
+    }
+
+    function stopAutoSelect(playSelected) {
+        if (cyclingInterval) {
+            clearInterval(cyclingInterval);
+            cyclingInterval = null;
+        }
+        autoSelectStarted = false;
+
+        if (playSelected && !autoSelectCancelled) {
+            // Pick a final card (the currently active one, or a random one)
+            var cards = getCards();
+            var availableIdx = [];
+            for (var i = 0; i < 4; i++) {
+                if (cards[i] && cards[i].innerHTML.trim().length > 0) availableIdx.push(i);
+            }
+            if (availableIdx.length === 0) return;
+            var finalIdx = activeCardIdx >= 0 && availableIdx.indexOf(activeCardIdx) >= 0
+                ? activeCardIdx
+                : availableIdx[Math.floor(Math.random() * availableIdx.length)];
+
+            clearActive();
+            cards[finalIdx].classList.add('autoselect-picked');
+            console.log('[ES] Auto-selected card', finalIdx + 1);
+
+            // Wait for the flash animation, then play
+            setTimeout(function() {
+                if (autoSelectCancelled) return;
+                playAutoSelected(finalIdx);
+            }, 500);
+        }
+    }
+
+    function playAutoSelected(idx) {
+        var pool = window.simPool || [];
+        if (pool.length <= idx) return;
+        var queue = pool.map(function(x) {
+            return {
+                id: { videoId: x.id },
+                snippet: {
+                    title: x.title,
+                    channelTitle: x.uploaderName,
+                    thumbnails: { default: { url: x.thumbnail }, high: { url: x.thumbnail } }
+                }
+            };
+        });
+        window.ytResults = queue;
+        window.playQueue = queue;
+        if (typeof window.playYoutube === 'function') window.playYoutube(idx);
+        console.log('[ES] Playing auto-selected song', idx + 1);
+        // Hide overlay after play
+        var ov = document.getElementById('endScreenOverlay');
+        if (ov) ov.classList.remove('show');
+        autoSelectStarted = false;
+        autoSelectCancelled = false;
+    }
+
+    // Cancel auto-select if user taps a card
+    function cancelOnUserTap() {
+        var cards = getCards();
+        cards.forEach(function(c) {
+            if (!c) return;
+            var original = c.onclick;
+            if (c._autoselectBound) return;
+            c._autoselectBound = true;
+            c.onclick = function(e) {
+                autoSelectCancelled = true;
+                if (cyclingInterval) { clearInterval(cyclingInterval); cyclingInterval = null; }
+                clearActive();
+                autoSelectStarted = false;
+                if (original) original(e);
+            };
+        });
+    }
+
+    // Main poll: check remaining time
+    setInterval(function() {
+        if (window.currentSource !== 'youtube') {
+            stopAutoSelect(false);
+            return;
+        }
+        if (!window.ytReady || !window.ytPlayer || typeof window.ytPlayer.getCurrentTime !== 'function') return;
+
+        try {
+            var dur = window.ytPlayer.getDuration() || 0;
+            var cur = window.ytPlayer.getCurrentTime() || 0;
+            if (dur <= 0) return;
+            var remaining = dur - cur;
+
+            // Reset on new song
+            var currentId = '';
+            try {
+                if (window.ytResults && window.ytResults[window.currentIndex]) {
+                    currentId = window.ytResults[window.currentIndex].id.videoId;
+                }
+            } catch(e) {}
+            if (currentId && currentId !== lastSongId) {
+                lastSongId = currentId;
+                stopAutoSelect(false);
+                clearActive();
+                autoSelectCancelled = false;
+                autoSelectStarted = false;
+            }
+
+            // START auto-select at 6 sec remaining
+            if (remaining <= 6 && remaining > 0.3 && !autoSelectStarted && !autoSelectCancelled) {
+                cancelOnUserTap();
+                startAutoSelect();
+            }
+
+            // STOP + play at end (0.5 sec remaining, or right when video ends)
+            if (remaining <= 0.5 && autoSelectStarted) {
+                stopAutoSelect(true);
+            }
+        } catch(e) {}
+    }, 300);
+})();
+// END AUTO SELECT
