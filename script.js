@@ -2714,3 +2714,66 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
+// END SCREEN OVERLAY - SHOW/HIDE
+(function() {
+    var lastSongId = null;
+    var isShown = false;
+
+    function getOverlay() {
+        return document.getElementById('endScreenOverlay');
+    }
+
+    function show() {
+        var ov = getOverlay();
+        if (!ov || isShown) return;
+        ov.classList.add('show');
+        isShown = true;
+        console.log('[ES] SHOW');
+    }
+
+    function hide() {
+        var ov = getOverlay();
+        if (!ov || !isShown) return;
+        ov.classList.remove('show');
+        isShown = false;
+        console.log('[ES] HIDE');
+    }
+
+    // Poll every 500ms
+    setInterval(function() {
+        if (window.currentSource !== 'youtube') {
+            if (isShown) hide();
+            return;
+        }
+        if (!window.ytReady || !window.ytPlayer || typeof window.ytPlayer.getCurrentTime !== 'function') {
+            if (isShown) hide();
+            return;
+        }
+        try {
+            var dur = window.ytPlayer.getDuration() || 0;
+            var cur = window.ytPlayer.getCurrentTime() || 0;
+            if (dur <= 0) return;
+            var remaining = dur - cur;
+
+            var currentId = '';
+            try {
+                if (window.ytResults && window.ytResults[window.currentIndex]) {
+                    currentId = window.ytResults[window.currentIndex].id.videoId;
+                }
+            } catch(e) {}
+            if (currentId && currentId !== lastSongId) {
+                lastSongId = currentId;
+                if (isShown) hide();
+            }
+
+            if (remaining <= 20 && remaining > 0.5 && !isShown) {
+                show();
+            }
+            if (remaining > 25 && isShown) {
+                hide();
+            }
+        } catch(e) {}
+    }, 500);
+})();
+// END END SCREEN OVERLAY - SHOW/HIDE
