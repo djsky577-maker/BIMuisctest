@@ -2493,9 +2493,16 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 // END MY PLAYLIST - RENDER FOLLOWED ARTISTS
 
-// MY PLAYLIST - FAVORITES
+
+
+
+
+
+
+// MY PLAYLIST - FAVORITES (swipe-left actions)
 (function() {
     var FAV_KEY = 'bi_my_favorites';
+    var openCard = null; // only one card open at a time
 
     function loadFavs() {
         try {
@@ -2507,199 +2514,15 @@ document.addEventListener('DOMContentLoaded', function() {
         try { localStorage.setItem(FAV_KEY, JSON.stringify(list)); } catch(e) {}
     }
 
-    function renderFavs() {
-        var row = document.getElementById('plFavRow');
-        if (!row) return;
-        var favorites = loadFavs();
-        if (favorites.length === 0) {
-            row.innerHTML = '<div class="pl-fav-empty">Tap ❤️ on any song to save it here</div>';
-            return;
-        }
-        row.innerHTML = '';
-        favorites.forEach(function(s, i) {
-            var card = document.createElement('div');
-            card.className = 'pl-fav-card';
-            card.innerHTML =
-                '<img src="' + (s.thumbnail || '') + '" onerror="this.src=\'https://via.placeholder.com/100\'">' +
-                '<div class="pl-fav-title">' + (s.title || 'Unknown').replace(/</g, '&lt;') + '</div>' +
-                '<button class="pl-fav-remove" data-idx="' + i + '">×</button>';
-            card.onclick = function(e) {
-                if (e.target.classList.contains('pl-fav-remove')) {
-                    e.stopPropagation();
-                    var favs = loadFavs();
-                    favs.splice(i, 1);
-                    saveFavs(favs);
-                    renderFavs();
-                    return;
-                }
-                // Play
-                var mock = {
-                    id: { videoId: s.id },
-                    snippet: {
-                        title: s.title,
-                        channelTitle: s.artist,
-                        thumbnails: { default: { url: s.thumbnail }, high: { url: s.thumbnail } }
-                    }
-                };
-                window.ytResults = [mock];
-                window.playQueue = window.ytResults;
-                if (typeof window.playYoutube === 'function') window.playYoutube(0);
-            };
-            row.appendChild(card);
+    function closeAll() {
+        document.querySelectorAll('.pl-fav-card.swiped').forEach(function(c) {
+            c.classList.remove('swiped');
         });
+        openCard = null;
     }
 
-    function getCurrentSong() {
-        try {
-            if (window.currentSource === 'youtube' && window.ytResults && window.ytResults[window.currentIndex]) {
-                var t = window.ytResults[window.currentIndex];
-                return {
-                    id: t.id.videoId,
-                    title: t.snippet.title || '',
-                    artist: t.snippet.channelTitle || '',
-                    thumbnail: (t.snippet.thumbnails && t.snippet.thumbnails.high && t.snippet.thumbnails.high.url) || ''
-                };
-            }
-        } catch(e) {}
-        return null;
-    }
-
-    // Override toggleLikeCurrent - save immediately, no async
-    window.toggleLikeCurrent = function() {
-        var heart = document.getElementById('fullHeart');
-        var song = getCurrentSong();
-        if (!song || !song.id) return;
-
-        var favs = loadFavs();
-        var idx = favs.findIndex(function(s) { return s.id === song.id; });
-
-        if (idx >= 0) {
-            favs.splice(idx, 1);
-            saveFavs(favs);  // SAVE IMMEDIATELY
-            if (heart) {
-                heart.classList.remove('liked');
-                heart.querySelectorAll('path').forEach(function(p) { p.style.fill = ''; });
-            }
-            showFavToast('Removed from favorites');
-        } else {
-            favs.push(song);
-            saveFavs(favs);  // SAVE IMMEDIATELY
-            if (heart) {
-                heart.classList.add('liked');
-                heart.querySelectorAll('path').forEach(function(p) { p.style.fill = '#ff4d4d'; });
-            }
-            showFavToast('❤️ Saved to My Favorites');
-        }
-        renderFavs();
-    };
-
-    function showFavToast(msg) {
-        var old = document.getElementById('favToast');
-        if (old) old.parentNode.removeChild(old);
-        var t = document.createElement('div');
-        t.id = 'favToast';
-        t.textContent = msg;
-        t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#00e0d0,#008f85);color:#000;font-weight:bold;font-size:13px;padding:12px 20px;border-radius:25px;z-index:2147483647;box-shadow:0 10px 30px rgba(0,224,208,0.6);opacity:0;transition:opacity 0.3s ease;';
-        document.body.appendChild(t);
-        setTimeout(function() { t.style.opacity = '1'; }, 20);
-        setTimeout(function() {
-            t.style.opacity = '0';
-            setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 400);
-        }, 2200);
-    }
-
-    // Update heart on player change
-    setInterval(function() {
-        var heart = document.getElementById('fullHeart');
-        if (!heart) return;
-        var song = getCurrentSong();
-        if (!song || !song.id) return;
-        var favs = loadFavs();
-        var isFav = favs.some(function(s) { return s.id === song.id; });
-        if (isFav) {
-            heart.classList.add('liked');
-            heart.querySelectorAll('path').forEach(function(p) { p.style.fill = '#ff4d4d'; });
-        } else {
-            heart.classList.remove('liked');
-            heart.querySelectorAll('path').forEach(function(p) { p.style.fill = ''; });
-        }
-    }, 800);
-
-    // Refresh favorites when playlist tab opens
-    var lastVisible = false;
-    setInterval(function() {
-        var v = document.getElementById('view-library');
-        if (!v) return;
-        var isVisible = v.classList.contains('active');
-        if (isVisible && !lastVisible) renderFavs();
-        lastVisible = isVisible;
-    }, 500);
-
-    // Init
-    setTimeout(renderFavs, 2000);
-})();
-// END MY PLAYLIST - FAVORITES
-
-// MY PLAYLIST - FAVORITES (with long-press menu)
-(function() {
-    var FAV_KEY = 'bi_my_favorites';
-
-    function loadFavs() {
-        try {
-            var raw = localStorage.getItem(FAV_KEY);
-            return raw ? JSON.parse(raw) : [];
-        } catch(e) { return []; }
-    }
-    function saveFavs(list) {
-        try { localStorage.setItem(FAV_KEY, JSON.stringify(list)); } catch(e) {}
-    }
-
-    function injectFavMenu() {
-        if (document.getElementById('favMenu')) return;
-        var menu = document.createElement('div');
-        menu.id = 'favMenu';
-        menu.innerHTML = '<div id="favMenuPanel"></div>';
-        document.body.appendChild(menu);
-        menu.addEventListener('click', function(e) {
-            if (e.target === menu) closeFavMenu();
-        });
-    }
-
-    function openFavMenu(song, index) {
-        injectFavMenu();
-        var panel = document.getElementById('favMenuPanel');
-        if (!panel) return;
-        panel.innerHTML =
-            '<div class="fav-menu-song-info">' +
-                '<img src="' + (song.thumbnail || '') + '" onerror="this.src=\'https://via.placeholder.com/100\'">' +
-                '<div class="fav-menu-song-text">' +
-                    '<div class="t">' + (song.title || 'Unknown').replace(/</g, '&lt;') + '</div>' +
-                    '<div class="a">' + (song.artist || 'Unknown').replace(/</g, '&lt;') + '</div>' +
-                '</div>' +
-            '</div>' +
-            '<button class="fav-menu-opt" data-action="play"><span class="ico">▶️</span> Play Now</button>' +
-            '<button class="fav-menu-opt" data-action="queue"><span class="ico">📋</span> Add to Queue</button>' +
-            '<button class="fav-menu-opt" data-action="share"><span class="ico">📤</span> Share</button>' +
-            '<button class="fav-menu-opt" data-action="info"><span class="ico">ℹ️</span> Song Info</button>' +
-            '<button class="fav-menu-opt danger" data-action="remove"><span class="ico">❌</span> Remove from Favorites</button>';
-
-        panel.querySelectorAll('.fav-menu-opt').forEach(function(btn) {
-            btn.onclick = function() {
-                var action = btn.getAttribute('data-action');
-                handleFavAction(action, song, index);
-                closeFavMenu();
-            };
-        });
-
-        document.getElementById('favMenu').classList.add('show');
-    }
-
-    function closeFavMenu() {
-        var m = document.getElementById('favMenu');
-        if (m) m.classList.remove('show');
-    }
-
-    function handleFavAction(action, song, index) {
+    function handleAction(action, song) {
+        closeAll();
         if (action === 'play') {
             var mock = {
                 id: { videoId: song.id },
@@ -2714,10 +2537,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof window.playYoutube === 'function') window.playYoutube(0);
         }
         else if (action === 'queue') {
-            // Add to play queue as next song
             try {
-                var q = window.playQueue || window.ytResults || [];
-                if (!Array.isArray(q)) q = [];
+                var q = (window.playQueue && window.playQueue.length) ? window.playQueue : (window.ytResults || []);
+                if (!Array.isArray(q) || q.length === 0) q = [];
                 q.splice((window.currentIndex || 0) + 1, 0, {
                     id: { videoId: song.id },
                     snippet: {
@@ -2729,9 +2551,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.playQueue = q;
                 window.ytResults = q;
                 showFavToast('📋 Added to queue');
-            } catch(e) {
-                showFavToast('Could not queue');
-            }
+            } catch(e) { showFavToast('Could not queue'); }
         }
         else if (action === 'share') {
             var url = 'https://www.youtube.com/watch?v=' + song.id;
@@ -2741,9 +2561,6 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 showFavToast('🔗 Link copied');
             }
-        }
-        else if (action === 'info') {
-            alert('🎵 ' + song.title + '\n👤 ' + song.artist + '\n🔗 https://www.youtube.com/watch?v=' + song.id);
         }
         else if (action === 'remove') {
             var favs = loadFavs();
@@ -2759,59 +2576,116 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!row) return;
         var favorites = loadFavs();
         if (favorites.length === 0) {
-            row.innerHTML = '<div class="pl-fav-empty">Tap ❤️ on any song to save it here. Long-press a song for more options.</div>';
+            row.innerHTML = '<div class="pl-fav-empty">Tap ❤️ on any song to save it here. Swipe left for options.</div>';
             return;
         }
         row.innerHTML = '';
         favorites.forEach(function(s, i) {
+            var wrap = document.createElement('div');
+            wrap.className = 'pl-fav-wrap';
+
+            // Actions behind the card
+            var actions = document.createElement('div');
+            actions.className = 'pl-fav-actions';
+            actions.innerHTML =
+                '<button class="pl-fav-action play" data-act="play"><span class="ico">▶️</span>Play</button>' +
+                '<button class="pl-fav-action queue" data-act="queue"><span class="ico">📋</span>Queue</button>' +
+                '<button class="pl-fav-action share" data-act="share"><span class="ico">📤</span>Share</button>' +
+                '<button class="pl-fav-action remove" data-act="remove"><span class="ico">❌</span>Remove</button>';
+            actions.querySelectorAll('.pl-fav-action').forEach(function(btn) {
+                btn.onclick = function(e) {
+                    e.stopPropagation();
+                    handleAction(btn.getAttribute('data-act'), s);
+                };
+            });
+            wrap.appendChild(actions);
+
+            // The card itself
             var card = document.createElement('div');
             card.className = 'pl-fav-card';
             card.innerHTML =
                 '<img src="' + (s.thumbnail || '') + '" onerror="this.src=\'https://via.placeholder.com/100\'">' +
                 '<div class="pl-fav-title">' + (s.title || 'Unknown').replace(/</g, '&lt;') + '</div>';
+            wrap.appendChild(card);
 
-            // Tap = play
-            var tapTimer = null;
-            var longPressed = false;
+            // Swipe logic
+            var startX = 0, startY = 0, moved = false, swiped = false, dragging = false;
 
-            card.addEventListener('touchstart', function() {
-                longPressed = false;
-                card.classList.add('longpressing');
-                tapTimer = setTimeout(function() {
-                    longPressed = true;
-                    card.classList.remove('longpressing');
-                    openFavMenu(s, i);
-                }, 550);
+            card.addEventListener('touchstart', function(e) {
+                var t = e.touches[0];
+                startX = t.clientX;
+                startY = t.clientY;
+                moved = false;
+                dragging = false;
+                swiped = card.classList.contains('swiped');
             }, { passive: true });
 
-            card.addEventListener('touchend', function() {
-                card.classList.remove('longpressing');
-                clearTimeout(tapTimer);
-                if (!longPressed) {
-                    // Short tap → play
-                    handleFavAction('play', s, i);
+            card.addEventListener('touchmove', function(e) {
+                var t = e.touches[0];
+                var dx = t.clientX - startX;
+                var dy = t.clientY - startY;
+
+                // If vertical movement bigger than horizontal → let it scroll
+                if (!dragging && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) {
+                    return;
+                }
+                if (Math.abs(dx) > 8) {
+                    dragging = true;
+                    moved = true;
+                }
+            }, { passive: true });
+
+            card.addEventListener('touchend', function(e) {
+                var t = e.changedTouches[0];
+                var dx = t.clientX - startX;
+
+                if (moved && dragging) {
+                    if (dx < -40 && !swiped) {
+                        // Swiped left → open
+                        closeAll();
+                        card.classList.add('swiped');
+                        openCard = card;
+                    } else if (dx > 40 && swiped) {
+                        // Swiped right → close
+                        card.classList.remove('swiped');
+                        openCard = null;
+                    }
+                    return;
+                }
+
+                if (!moved) {
+                    if (swiped) {
+                        // Tapping an open card just closes it
+                        card.classList.remove('swiped');
+                        openCard = null;
+                    } else {
+                        // Plain tap → play
+                        handleAction('play', s);
+                    }
                 }
             });
 
-            card.addEventListener('touchmove', function() {
-                // Cancel long-press if user scrolls
-                clearTimeout(tapTimer);
-                card.classList.remove('longpressing');
-            }, { passive: true });
-
-            // Desktop fallback (mouse)
-            card.oncontextmenu = function(e) {
-                e.preventDefault();
-                openFavMenu(s, i);
-            };
-            card.onclick = function(e) {
-                if (e.detail === 0) return; // ignore synthesized
-                if (!('ontouchstart' in window)) handleFavAction('play', s, i);
+            // Desktop support
+            card.onclick = function() {
+                if (!('ontouchstart' in window)) {
+                    if (card.classList.contains('swiped')) {
+                        card.classList.remove('swiped');
+                    } else {
+                        handleAction('play', s);
+                    }
+                }
             };
 
-            row.appendChild(card);
+            row.appendChild(wrap);
         });
     }
+
+    // Close open card when tapping elsewhere
+    document.addEventListener('touchstart', function(e) {
+        if (openCard && !e.target.closest('.pl-fav-wrap')) {
+            closeAll();
+        }
+    }, { passive: true });
 
     function getCurrentSong() {
         try {
@@ -2828,7 +2702,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return null;
     }
 
-    // Heart button override
+    // Heart button
     window.toggleLikeCurrent = function() {
         var heart = document.getElementById('fullHeart');
         var song = getCurrentSong();
@@ -2872,7 +2746,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 2200);
     }
 
-    // Update heart state
     setInterval(function() {
         var heart = document.getElementById('fullHeart');
         if (!heart) return;
@@ -2889,7 +2762,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 800);
 
-    // Refresh favorites when playlist tab opens
     var lastVisible = false;
     setInterval(function() {
         var v = document.getElementById('view-library');
@@ -2902,30 +2774,3 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(renderFavs, 2000);
 })();
 // END MY PLAYLIST - FAVORITES
-
-// FAVORITES LONG-PRESS - FIX CHROME NATIVE MENU
-(function() {
-    // Block context menu on favorite cards
-    document.addEventListener('contextmenu', function(e) {
-        if (e.target.closest('.pl-fav-card')) {
-            e.preventDefault();
-            return false;
-        }
-    }, true);
-
-    // Block Chrome's long-press text/image menu
-    document.addEventListener('touchstart', function(e) {
-        if (e.target.closest('.pl-fav-card')) {
-            // The touchstart handler in the favorites code already handles the timer
-            // This just prevents Chrome from showing its own menu
-        }
-    }, { passive: true });
-
-    // Override -webkit-touch-callout via CSS (already added) + block mousedown long
-    document.addEventListener('mousedown', function(e) {
-        if (e.target.closest('.pl-fav-card')) {
-            if (e.button === 2) e.preventDefault(); // right-click
-        }
-    }, true);
-})();
-// END FAVORITES LONG-PRESS FIX

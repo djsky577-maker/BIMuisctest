@@ -948,3 +948,93 @@ body { background: #050505 !important; }
 .pl-fav-card img {
     pointer-events: none !important;
 }
+
+/* ===== FAVORITES - SWIPE-LEFT ACTION PANEL ===== */
+#plFavRow {
+    padding: 8px 18px !important;
+}
+.pl-fav-wrap {
+    flex: 0 0 auto;
+    position: relative;
+    width: 62px;
+    height: 84px;
+    overflow: hidden;
+    border-radius: 10px;
+}
+.pl-fav-card {
+    position: absolute !important;
+    top: 0; left: 0;
+    width: 62px !important;
+    height: 84px;
+    background: #050508;
+    border-radius: 10px;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+    touch-action: pan-y;
+    will-change: transform;
+}
+.pl-fav-card.swiped {
+    transform: translateX(-124px);
+}
+.pl-fav-card img {
+    width: 62px;
+    height: 62px;
+    border-radius: 10px;
+    object-fit: cover;
+    display: block;
+    border: 1px solid rgba(0, 224, 208, 0.25);
+    pointer-events: none;
+}
+.pl-fav-card .pl-fav-title {
+    font-size: 10px;
+    color: #ccc;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 62px;
+    pointer-events: none;
+}
+/* Actions that appear behind the card */
+.pl-fav-actions {
+    position: absolute;
+    top: 0; right: 0;
+    height: 62px;
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    z-index: 1;
+    align-items: center;
+}
+.pl-fav-action {
+    width: 38px;
+    height: 50px;
+    border-radius: 8px;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+    font-family: inherit;
+    color: #fff;
+    font-size: 9px;
+    font-weight: bold;
+    padding: 0;
+    transition: all 0.15s ease;
+}
+.pl-fav-action .ico { font-size: 18px; line-height: 1; }
+.pl-fav-action.play { background: linear-gradient(135deg, #00e0d0, #008f85); color: #000; }
+.pl-fav-action.queue { background: rgba(0, 224, 208, 0.25); border: 1px solid rgba(0,224,208,0.5); }
+.pl-fav-action.share { background: rgba(100, 150, 255, 0.25); border: 1px solid rgba(100,150,255,0.5); }
+.pl-fav-action.remove { background: rgba(255, 77, 77, 0.3); border: 1px solid rgba(255,77,77,0.6); }
+.pl-fav-action:active { transform: scale(0.9); }
+
+.pl-fav-empty {
+    color: #666;
+    font-size: 12px;
+    padding: 8px 0;
+    font-style: italic;
+    min-width: 100%;
+}
