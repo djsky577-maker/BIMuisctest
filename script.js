@@ -2782,40 +2782,104 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-// END SCREEN OVERLAY - PREMIUM 4 CORNERS
+
+
+// END SCREEN OVERLAY - PREMIUM 4 CORNERS + CLICK
 (function() {
+    function getCurrentArtist() {
+        try {
+            if (window.ytResults && window.ytResults[window.currentIndex]) {
+                return window.ytResults[window.currentIndex].snippet.channelTitle || '';
+            }
+        } catch(e) {}
+        return '';
+    }
+
+    // Fetch real artist avatar via YouTube channel search
+    async function fetchArtistAvatar(artistName) {
+        if (!artistName || !window.pget) return '';
+        try {
+            var d = await window.pget('/search?q=' + encodeURIComponent(artistName) + '&filter=channels');
+            var items = (d.items || []).slice(0, 5);
+            var nm = artistName.toLowerCase().replace(/vevo|official|topic|\s*-\s*topic/gi, '').trim();
+            // Try to find a channel whose name closely matches
+            for (var i = 0; i < items.length; i++) {
+                var cn = (items[i].name || '').toLowerCase().replace(/vevo|official|topic|\s*-\s*topic/gi, '').trim();
+                if (cn === nm || cn.indexOf(nm) === 0 || nm.indexOf(cn) === 0) {
+                    if (items[i].thumbnail) return items[i].thumbnail;
+                }
+            }
+            // Fallback: first channel result
+            if (items[0] && items[0].thumbnail) return items[0].thumbnail;
+        } catch(e) {}
+        return '';
+    }
+
+    function playCard(index) {
+        var pool = window.simPool || [];
+        if (pool.length < 1) return;
+        var queue = pool.map(function(x) {
+            return {
+                id: { videoId: x.id },
+                snippet: {
+                    title: x.title,
+                    channelTitle: x.uploaderName,
+                    thumbnails: { default: { url: x.thumbnail }, high: { url: x.thumbnail } }
+                }
+            };
+        });
+        window.ytResults = queue;
+        window.playQueue = queue;
+        if (typeof window.playYoutube === 'function') window.playYoutube(index);
+    }
+
     function populate() {
         var pool = window.simPool || [];
         if (pool.length < 4) return;
 
         var cards = [
-            document.getElementById('esCard1'),
-            document.getElementById('esCard2'),
-            document.getElementById('esCard3'),
-            document.getElementById('esCard4')
+            { el: document.getElementById('esCard1'), idx: 0 },
+            { el: document.getElementById('esCard2'), idx: 1 },
+            { el: document.getElementById('esCard3'), idx: 2 },
+            { el: document.getElementById('esCard4'), idx: 3 }
         ];
 
-        for (var i = 0; i < 4; i++) {
-            var c = cards[i];
-            var s = pool[i];
-            if (!c || !s) continue;
-            c.innerHTML =
+        cards.forEach(function(c) {
+            var s = pool[c.idx];
+            if (!c.el || !s) return;
+            c.el.innerHTML =
                 '<img class="es-thumb" src="' + (s.thumbnail || '') + '" onerror="this.style.opacity=0.3">' +
                 '<div class="es-title">' + (s.title || 'Unknown').replace(/</g, '&lt;') + '</div>';
-        }
+            // Click handler
+            c.el.onclick = function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                playCard(c.idx);
+            };
+        });
 
-        // Avatar - current artist
+        // Avatar - fetch real image from YouTube channel
         var av = document.getElementById('esAvatar');
         if (av) {
-            var artistName = '';
-            try {
-                if (window.ytResults && window.ytResults[window.currentIndex]) {
-                    artistName = window.ytResults[window.currentIndex].snippet.channelTitle || '';
+            var artistName = getCurrentArtist();
+            // Show initials placeholder instantly
+            av.innerHTML = '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(artistName || 'X') + '&background=00e0d0&color=000&size=200">';
+            // Then load the real one async
+            if (artistName) {
+                fetchArtistAvatar(artistName).then(function(url) {
+                    if (url && av.querySelector('img')) {
+                        av.querySelector('img').src = url;
+                    }
+                }).catch(function(){});
+            }
+            // Click handler - open artist profile
+            av.onclick = function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                if (artistName && typeof window.openArtistProfile === 'function') {
+                    window.openArtistProfile(artistName, av.querySelector('img') ? av.querySelector('img').src : '');
                 }
-            } catch(e) {}
-            var avatarImg = 'https://ui-avatars.com/api/?name=' +
-                encodeURIComponent(artistName || 'X') + '&background=00e0d0&color=000&size=200';
-            av.innerHTML = '<img src="' + avatarImg + '" onerror="this.src=\'https://ui-avatars.com/api/?name=X&background=00e0d0&color=000&size=200\'">';
+            };
         }
 
         console.log('[ES] Populated 4 cards + avatar');
@@ -2829,4 +2893,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 800);
 })();
-// END END SCREEN OVERLAY - PREMIUM 4 CORNERS
+// END END SCREEN OVERLAY - PREMIUM 4 CORNERS + CLICK
