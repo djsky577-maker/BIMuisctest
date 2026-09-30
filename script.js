@@ -2799,3 +2799,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 2000);
 })();
 // END END SCREEN DEBUG
+
+// FORCE SHOW OVERLAY FOR TESTING
+setTimeout(function() {
+    var ov = document.getElementById('endScreenOverlay');
+    if (ov) {
+        ov.classList.add('show');
+        console.log('[ES FORCE] Overlay forced to show');
+    }
+}, 5000);
+// END FORCE SHOW
