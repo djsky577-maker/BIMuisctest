@@ -1066,3 +1066,66 @@ body { background: #050505 !important; }
     position: fixed !important;
     inset: 0 !important;
 }
+
+/* ===== END SCREEN OVERLAY - INSIDE VIDEO BOX ===== */
+/* Force the overlay to fill the video box only */
+#fullArtBox #endScreenOverlay,
+#fullArtBox .es-overlay {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 999 !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    background: rgba(5, 5, 8, 0.75) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+#fullArtBox #endScreenOverlay.show,
+#fullArtBox .es-overlay.show {
+    display: block !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+/* Cards inside the small box - scaled down */
+#fullArtBox .es-card {
+    width: 40% !important;
+    max-width: 140px !important;
+    right: 6px !important;
+    border-radius: 6px !important;
+    border-width: 1px !important;
+}
+#fullArtBox .es-card-top { top: 6px !important; }
+#fullArtBox .es-card-bot { bottom: 6px !important; }
+#fullArtBox .es-card .es-title {
+    font-size: 8px !important;
+    top: 4px !important;
+    left: 5px !important;
+    right: 25px !important;
+}
+#fullArtBox .es-card .es-duration {
+    font-size: 7px !important;
+    bottom: 3px !important;
+    right: 3px !important;
+    padding: 1px 3px !important;
+}
+
+/* Avatar inside the small box - scaled down */
+#fullArtBox .es-avatar {
+    width: 18% !important;
+    max-width: 70px !important;
+    bottom: 6px !important;
+    left: 6px !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.9) !important;
+}
