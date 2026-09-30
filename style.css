@@ -990,3 +990,41 @@ body { background: #050505 !important; }
     font-style: italic;
     min-width: 100%;
 }
+
+/* ===== FAVORITES - GLOWING SCROLL LINE ===== */
+#plFavScrollLine {
+    width: 60%;
+    height: 8px;
+    margin: 12px auto 8px auto;
+    background: rgba(0, 224, 208, 0.1);
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+    padding: 6px 0;
+    box-sizing: content-box;
+    user-select: none;
+    -webkit-user-select: none;
+}
+#plFavScrollLine:active {
+    cursor: grabbing;
+}
+#plFavScrollLineFill {
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, #00e0d0, #4d9eff, #b84dff, #ff4d9e, #00e0d0);
+    background-size: 300% 100%;
+    border-radius: 20px;
+    box-shadow: 0 0 15px rgba(0, 224, 208, 0.7), 0 0 30px rgba(0, 224, 208, 0.4);
+    animation: favLineGrow 3s ease-in-out infinite, favLineColor 8s linear infinite;
+    will-change: width, background-position, box-shadow;
+}
+@keyframes favLineGrow {
+    0%, 100% { width: 40%; box-shadow: 0 0 15px rgba(0, 224, 208, 0.7), 0 0 30px rgba(0, 224, 208, 0.4); }
+    50%      { width: 90%; box-shadow: 0 0 25px rgba(0, 224, 208, 1), 0 0 45px rgba(0, 224, 208, 0.6); }
+}
+@keyframes favLineColor {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+}

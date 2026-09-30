@@ -2778,3 +2778,70 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(renderFavs, 2000);
 })();
 // END MY PLAYLIST - FAVORITES
+
+// FAVORITES - GLOWING LINE SCROLL
+(function() {
+    var line = document.getElementById('plFavScrollLine');
+    if (!line) {
+        // Wait for it to exist
+        setTimeout(function() { window.dispatchEvent(new Event('favLineReady')); }, 1000);
+    }
+
+    var dragStartX = 0;
+    var dragStartScroll = 0;
+    var dragging = false;
+
+    function attach() {
+        var line = document.getElementById('plFavScrollLine');
+        var row = document.getElementById('plFavRow');
+        if (!line || !row) {
+            setTimeout(attach, 500);
+            return;
+        }
+        if (line._bound) return;
+        line._bound = true;
+
+        // Touch
+        line.addEventListener('touchstart', function(e) {
+            var t = e.touches[0];
+            dragStartX = t.clientX;
+            dragStartScroll = row.scrollLeft;
+            dragging = true;
+        }, { passive: true });
+
+        line.addEventListener('touchmove', function(e) {
+            if (!dragging) return;
+            e.preventDefault();
+            var t = e.touches[0];
+            var dx = t.clientX - dragStartX;
+            row.scrollLeft = dragStartScroll - dx;
+        }, { passive: false });
+
+        line.addEventListener('touchend', function() {
+            dragging = false;
+        });
+
+        // Mouse
+        line.addEventListener('mousedown', function(e) {
+            dragStartX = e.clientX;
+            dragStartScroll = row.scrollLeft;
+            dragging = true;
+            e.preventDefault();
+        });
+        document.addEventListener('mousemove', function(e) {
+            if (!dragging) return;
+            var dx = e.clientX - dragStartX;
+            row.scrollLeft = dragStartScroll - dx;
+        });
+        document.addEventListener('mouseup', function() {
+            dragging = false;
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attach);
+    } else {
+        attach();
+    }
+})();
+// END FAVORITES - GLOWING LINE SCROLL
