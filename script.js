@@ -2895,41 +2895,42 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 // END END SCREEN OVERLAY - PREMIUM 4 CORNERS + CLICK
 
+
+
 // ARTIST SIDE PANEL
 (function() {
-    var currentArtist = { name: '', img: '' };
-    var artistSongs = [];
+    var aspArtist = { name: '', img: '' };
+    var aspSongs = [];
 
     window.openArtistSidePanel = async function(name, img) {
         if (!name) return;
-        currentArtist = { name: name, img: img || '' };
+        aspArtist = { name: name, img: img || '' };
 
         var panel = document.getElementById('artistSidePanel');
         if (!panel) return;
 
-        // Set avatar
         var avatarEl = document.getElementById('aspAvatar');
-        if (avatarEl) avatarEl.src = img || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=00e0d0&color=000&size=200');
+        if (avatarEl) {
+            avatarEl.src = img || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=00e0d0&color=000&size=200');
+        }
 
-        // Set name
         var nameEl = document.getElementById('aspName');
         if (nameEl) nameEl.textContent = name;
 
-        // Set follow button state
-        updateFollowBtn();
+        updateAspFollow();
 
-        // Reset songs
         var songsList = document.getElementById('aspSongsList');
-        if (songsList) songsList.innerHTML = '<div class="asp-loading">Loading...</div>';
-        artistSongs = [];
+        if (songsList) songsList.innerHTML = '<div class="asp-loading">Loading songs...</div>';
+        aspSongs = [];
 
-        // Open panel
         panel.classList.add('open');
 
-        // Fetch songs
         try {
             var pget = window.pget;
-            if (!pget) return;
+            if (!pget) {
+                if (songsList) songsList.innerHTML = '<div class="asp-loading">API not available</div>';
+                return;
+            }
 
             var d = await pget('/search?q=' + encodeURIComponent(name + ' official video') + '&filter=videos');
             var items = (d.items || []).filter(function(v) { return v.url && v.title; }).slice(0, 20);
@@ -2943,7 +2944,7 @@ document.addEventListener('DOMContentLoaded', function() {
             songsList.innerHTML = '';
             items.forEach(function(v, idx) {
                 var vid = (v.url || '').replace('/watch?v=', '');
-                artistSongs.push({
+                aspSongs.push({
                     id: vid,
                     title: v.title,
                     artist: v.uploaderName || name,
@@ -2958,20 +2959,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         '<div class="asp-song-title">' + (v.title || '').replace(/</g, '&lt;') + '</div>' +
                         '<div class="asp-song-sub">' + (v.uploaderName || '').replace(/</g, '&lt;') + '</div>' +
                     '</div>';
-
-                row.onclick = function() {
-                    playFromPanel(idx);
-                };
+                row.onclick = function() { playFromAsp(idx); };
                 songsList.appendChild(row);
             });
         } catch(e) {
-            if (songsList) songsList.innerHTML = '<div class="asp-loading">Could not load songs</div>';
+            if (songsList) songsList.innerHTML = '<div class="asp-loading">Error loading songs</div>';
+            console.log('[ASP] Error:', e);
         }
     };
 
-    function playFromPanel(idx) {
-        if (!artistSongs[idx]) return;
-        var queue = artistSongs.map(function(x) {
+    function playFromAsp(idx) {
+        if (!aspSongs[idx]) return;
+        var queue = aspSongs.map(function(x) {
             return {
                 id: { videoId: x.id },
                 snippet: {
@@ -2984,7 +2983,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.ytResults = queue;
         window.playQueue = queue;
         if (typeof window.playYoutube === 'function') window.playYoutube(idx);
-        // Close panel automatically after song starts
         window.closeArtistSidePanel();
     }
 
@@ -2994,47 +2992,46 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.aspToggleFollow = function() {
-        if (!currentArtist.name) return;
+        if (!aspArtist.name) return;
         if (typeof window.toggleFollow === 'function') {
-            window.toggleFollow(currentArtist.name, null, null);
+            window.toggleFollow(aspArtist.name, null, null);
         }
-        updateFollowBtn();
+        updateAspFollow();
     };
 
-    function updateFollowBtn() {
+    function updateAspFollow() {
         var btn = document.getElementById('aspFollowBtn');
         if (!btn) return;
-        var isF = (window.followedArtists || []).some(function(a) {
-            return a.name.toLowerCase() === currentArtist.name.toLowerCase();
+        var list = window.followedArtists || [];
+        var isF = list.some(function(a) {
+            return (a.name || '').toLowerCase() === aspArtist.name.toLowerCase();
         });
         btn.textContent = isF ? 'Following' : 'Follow';
         btn.classList.toggle('following', isF);
     }
 
-    // Override the avatar click on the end screen
-    setInterval(function() {
+    // Bind the end screen avatar to open the side panel
+    function bindEndScreenAvatar() {
         var av = document.getElementById('esAvatar');
         if (!av || av._aspBound) return;
         av._aspBound = true;
-
-        var originalClick = av.onclick;
         av.onclick = function(e) {
             e.stopPropagation();
             e.preventDefault();
-            // Get current artist from the player
             var artistName = '';
             var artistImg = '';
             try {
                 if (window.ytResults && window.ytResults[window.currentIndex]) {
                     artistName = window.ytResults[window.currentIndex].snippet.channelTitle || '';
                 }
-                var avImg = av.querySelector('img');
-                if (avImg) artistImg = avImg.src;
+                var img = av.querySelector('img');
+                if (img) artistImg = img.src;
             } catch(e) {}
-            if (artistName) {
-                window.openArtistSidePanel(artistName, artistImg);
-            }
+            if (artistName) window.openArtistSidePanel(artistName, artistImg);
         };
-    }, 500);
+    }
+
+    // Keep trying to bind the avatar (in case end screen shows/hides)
+    setInterval(bindEndScreenAvatar, 700);
 })();
 // END ARTIST SIDE PANEL
