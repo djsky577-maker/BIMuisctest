@@ -2827,3 +2827,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 1000);
 })();
 // END END SCREEN OVERLAY - POPULATE CARDS
+
+// ES MANUAL TEST
+setTimeout(function() {
+    var btn = document.createElement('button');
+    btn.id = 'esTestBtn';
+    btn.innerHTML = '🧪 TEST ES';
+    btn.style.cssText = 'position:fixed;top:100px;left:10px;z-index:2147483647;background:#00e0d0;color:#000;border:none;padding:10px;border-radius:20px;font-weight:bold;font-size:12px;';
+    btn.onclick = function() {
+        var ov = document.getElementById('endScreenOverlay');
+        if (!ov) return alert('Overlay HTML missing!');
+        var pool = window.simPool || [];
+        var status = 'simPool length: ' + pool.length + '\n';
+        if (pool[0]) status += 'Song 1: ' + pool[0].title + '\n';
+        if (pool[1]) status += 'Song 2: ' + pool[1].title;
+        alert(status);
+        // Manually populate
+        var c1 = document.getElementById('esCard1');
+        var c2 = document.getElementById('esCard2');
+        if (pool[0]) {
+            c1.innerHTML = '<img class="es-thumb" src="' + pool[0].thumbnail + '"><div class="es-title">' + pool[0].title + '</div>';
+        }
+        if (pool[1]) {
+            c2.innerHTML = '<img class="es-thumb" src="' + pool[1].thumbnail + '"><div class="es-title">' + pool[1].title + '</div>';
+        }
+        ov.classList.add('show');
+    };
+    document.body.appendChild(btn);
+    console.log('[ES TEST] Test button added');
+}, 3000);
+// END ES MANUAL TEST
