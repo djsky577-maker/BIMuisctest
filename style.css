@@ -1399,3 +1399,36 @@ body { background: #050505 !important; }
     70%  { transform: scale(1.1); }
     100% { transform: scale(1.15); }
 }
+
+/* ===== AUTO-SELECT MESSAGE ===== */
+#esAutoSelectMsg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #00e0d0;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 0 0 20px rgba(0, 224, 208, 0.9), 0 2px 6px rgba(0, 0, 0, 0.9);
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.55);
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 224, 208, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: esMsgPulse 1.2s ease-in-out infinite;
+}
+#esAutoSelectMsg.show {
+    opacity: 1;
+}
+@keyframes esMsgPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50%      { transform: translate(-50%, -50%) scale(1.06); }
+}

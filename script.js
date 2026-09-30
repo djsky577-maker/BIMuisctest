@@ -3104,13 +3104,16 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 // END AVATAR FIX
 
-// AUTO SELECT - bounce ring on cards, pick random at end, play
+
+
+// AUTO SELECT
 (function() {
     var cyclingInterval = null;
     var activeCardIdx = -1;
     var autoSelectStarted = false;
     var autoSelectCancelled = false;
     var lastSongId = '';
+    var messageEl = null;
 
     function getCards() {
         return [
@@ -3121,10 +3124,32 @@ document.addEventListener('DOMContentLoaded', function() {
         ];
     }
 
-    function clearActive() {
+    function clearAllStates() {
         getCards().forEach(function(c) {
-            if (c) c.classList.remove('autoselect-active');
+            if (!c) return;
+            c.classList.remove('autoselect-active');
+            c.classList.remove('autoselect-picked');
         });
+    }
+
+    function ensureMessage() {
+        if (messageEl && document.body.contains(messageEl)) return messageEl;
+        var box = document.getElementById('fullArtBox');
+        if (!box) return null;
+        messageEl = document.createElement('div');
+        messageEl.id = 'esAutoSelectMsg';
+        messageEl.textContent = '🎯 AUTO-SELECTING...';
+        box.appendChild(messageEl);
+        return messageEl;
+    }
+
+    function showMessage() {
+        var m = ensureMessage();
+        if (m) m.classList.add('show');
+    }
+
+    function hideMessage() {
+        if (messageEl) messageEl.classList.remove('show');
     }
 
     function cycle() {
@@ -3132,14 +3157,13 @@ document.addEventListener('DOMContentLoaded', function() {
         var cards = getCards();
         if (!cards[0]) return;
 
-        // If all 4 cards are populated, cycle between them
         var availableIdx = [];
         for (var i = 0; i < 4; i++) {
             if (cards[i] && cards[i].innerHTML.trim().length > 0) availableIdx.push(i);
         }
         if (availableIdx.length === 0) return;
 
-        clearActive();
+        cards.forEach(function(c) { if (c) c.classList.remove('autoselect-active'); });
         activeCardIdx = availableIdx[Math.floor(Math.random() * availableIdx.length)];
         cards[activeCardIdx].classList.add('autoselect-active');
     }
@@ -3149,12 +3173,13 @@ document.addEventListener('DOMContentLoaded', function() {
         autoSelectStarted = true;
         autoSelectCancelled = false;
         activeCardIdx = -1;
-        clearActive();
 
-        // Bounce every 450ms
+        // Clear any stale state from previous videos
+        clearAllStates();
+        showMessage();
+
         cyclingInterval = setInterval(cycle, 450);
-        cycle(); // fire immediately
-
+        cycle();
         console.log('[ES] Auto-select started');
     }
 
@@ -3164,24 +3189,24 @@ document.addEventListener('DOMContentLoaded', function() {
             cyclingInterval = null;
         }
         autoSelectStarted = false;
+        hideMessage();
 
         if (playSelected && !autoSelectCancelled) {
-            // Pick a final card (the currently active one, or a random one)
             var cards = getCards();
             var availableIdx = [];
             for (var i = 0; i < 4; i++) {
                 if (cards[i] && cards[i].innerHTML.trim().length > 0) availableIdx.push(i);
             }
             if (availableIdx.length === 0) return;
+
             var finalIdx = activeCardIdx >= 0 && availableIdx.indexOf(activeCardIdx) >= 0
                 ? activeCardIdx
                 : availableIdx[Math.floor(Math.random() * availableIdx.length)];
 
-            clearActive();
+            cards.forEach(function(c) { if (c) c.classList.remove('autoselect-active'); });
             cards[finalIdx].classList.add('autoselect-picked');
             console.log('[ES] Auto-selected card', finalIdx + 1);
 
-            // Wait for the flash animation, then play
             setTimeout(function() {
                 if (autoSelectCancelled) return;
                 playAutoSelected(finalIdx);
@@ -3206,35 +3231,53 @@ document.addEventListener('DOMContentLoaded', function() {
         window.playQueue = queue;
         if (typeof window.playYoutube === 'function') window.playYoutube(idx);
         console.log('[ES] Playing auto-selected song', idx + 1);
-        // Hide overlay after play
+
         var ov = document.getElementById('endScreenOverlay');
         if (ov) ov.classList.remove('show');
+
+        // Clean up so next video is fresh
+        clearAllStates();
         autoSelectStarted = false;
         autoSelectCancelled = false;
     }
 
-    // Cancel auto-select if user taps a card
     function cancelOnUserTap() {
         var cards = getCards();
         cards.forEach(function(c) {
             if (!c) return;
-            var original = c.onclick;
             if (c._autoselectBound) return;
             c._autoselectBound = true;
+            var original = c.onclick;
             c.onclick = function(e) {
                 autoSelectCancelled = true;
                 if (cyclingInterval) { clearInterval(cyclingInterval); cyclingInterval = null; }
-                clearActive();
+                clearAllStates();
+                hideMessage();
                 autoSelectStarted = false;
                 if (original) original(e);
             };
         });
     }
 
+    // Watch overlay state: when it hides, clear everything
+    setInterval(function() {
+        var ov = document.getElementById('endScreenOverlay');
+        if (!ov) return;
+        var visible = ov.classList.contains('show');
+        if (!visible) {
+            // Overlay not shown — make sure everything is clean
+            if (cyclingInterval) { clearInterval(cyclingInterval); cyclingInterval = null; }
+            clearAllStates();
+            hideMessage();
+            autoSelectStarted = false;
+        }
+    }, 500);
+
     // Main poll: check remaining time
     setInterval(function() {
         if (window.currentSource !== 'youtube') {
             stopAutoSelect(false);
+            clearAllStates();
             return;
         }
         if (!window.ytReady || !window.ytPlayer || typeof window.ytPlayer.getCurrentTime !== 'function') return;
@@ -3245,7 +3288,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (dur <= 0) return;
             var remaining = dur - cur;
 
-            // Reset on new song
+            // New song? Reset
             var currentId = '';
             try {
                 if (window.ytResults && window.ytResults[window.currentIndex]) {
@@ -3255,18 +3298,18 @@ document.addEventListener('DOMContentLoaded', function() {
             if (currentId && currentId !== lastSongId) {
                 lastSongId = currentId;
                 stopAutoSelect(false);
-                clearActive();
+                clearAllStates();
                 autoSelectCancelled = false;
                 autoSelectStarted = false;
             }
 
-            // START auto-select at 6 sec remaining
+            // Start at 6 sec remaining
             if (remaining <= 6 && remaining > 0.3 && !autoSelectStarted && !autoSelectCancelled) {
                 cancelOnUserTap();
                 startAutoSelect();
             }
 
-            // STOP + play at end (0.5 sec remaining, or right when video ends)
+            // Stop at 0.5 sec remaining
             if (remaining <= 0.5 && autoSelectStarted) {
                 stopAutoSelect(true);
             }
