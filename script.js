@@ -3013,3 +3013,93 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(bindEndScreenAvatar, 700);
 })();
 // END ARTIST SIDE PANEL
+
+// AVATAR FIX - Fetch real artist image for esAvatar and side panel
+(function() {
+    var cachedArtistImages = {};
+
+    function getCurrentArtistName() {
+        try {
+            if (window.ytResults && window.ytResults[window.currentIndex]) {
+                return window.ytResults[window.currentIndex].snippet.channelTitle || '';
+            }
+        } catch(e) {}
+        return '';
+    }
+
+    // Fetch real image from YouTube channel search
+    async function fetchRealArtistImg(artistName) {
+        if (!artistName || !window.pget) return '';
+        if (cachedArtistImages[artistName]) return cachedArtistImages[artistName];
+        try {
+            var d = await window.pget('/search?q=' + encodeURIComponent(artistName) + '&filter=channels');
+            var items = (d.items || []).slice(0, 5);
+            var nm = artistName.toLowerCase().replace(/vevo|official|topic|\s*-\s*topic/gi, '').trim();
+            var best = '';
+            for (var i = 0; i < items.length; i++) {
+                var cn = (items[i].name || '').toLowerCase().replace(/vevo|official|topic|\s*-\s*topic/gi, '').trim();
+                if ((cn === nm || cn.indexOf(nm) === 0 || nm.indexOf(cn) === 0) && items[i].thumbnail) {
+                    best = items[i].thumbnail;
+                    break;
+                }
+            }
+            if (!best && items[0] && items[0].thumbnail) best = items[0].thumbnail;
+            if (best) cachedArtistImages[artistName] = best;
+            return best;
+        } catch(e) {}
+        return '';
+    }
+
+    // Set the center avatar
+    async function updateCenterAvatar() {
+        var av = document.getElementById('esAvatar');
+        if (!av) return;
+        var artistName = getCurrentArtistName();
+        if (!artistName) return;
+
+        // Don't reset if already set to the real image for this artist
+        if (av._currentArtist === artistName && av.querySelector('img') && av.querySelector('img').src.indexOf('ui-avatars') < 0) return;
+        av._currentArtist = artistName;
+
+        // Show placeholder first
+        av.innerHTML = '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(artistName) + '&background=00e0d0&color=000&size=200">';
+
+        // Fetch and set real image
+        var realImg = await fetchRealArtistImg(artistName);
+        if (realImg && av._currentArtist === artistName) {
+            var imgEl = av.querySelector('img');
+            if (imgEl) imgEl.src = realImg;
+        }
+    }
+
+    // Poll to update center avatar when overlay shows
+    setInterval(function() {
+        var ov = document.getElementById('endScreenOverlay');
+        if (ov && ov.classList.contains('show')) {
+            updateCenterAvatar();
+        }
+    }, 1000);
+
+    // Expose the image fetcher so the side panel can use it
+    window.fetchRealArtistImg = fetchRealArtistImg;
+
+    // Override the avatar click to pass the real image
+    setTimeout(function() {
+        var av = document.getElementById('esAvatar');
+        if (!av) return;
+        av.onclick = function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            var artistName = getCurrentArtistName();
+            if (!artistName) return;
+            var imgEl = av.querySelector('img');
+            var img = imgEl ? imgEl.src : '';
+            // If we have the real image cached, use it
+            if (cachedArtistImages[artistName]) img = cachedArtistImages[artistName];
+            if (typeof window.openArtistSidePanel === 'function') {
+                window.openArtistSidePanel(artistName, img);
+            }
+        };
+    }, 2000);
+})();
+// END AVATAR FIX
