@@ -2894,3 +2894,147 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 800);
 })();
 // END END SCREEN OVERLAY - PREMIUM 4 CORNERS + CLICK
+
+// ARTIST SIDE PANEL
+(function() {
+    var currentArtist = { name: '', img: '' };
+    var artistSongs = [];
+
+    window.openArtistSidePanel = async function(name, img) {
+        if (!name) return;
+        currentArtist = { name: name, img: img || '' };
+
+        var panel = document.getElementById('artistSidePanel');
+        if (!panel) return;
+
+        // Set avatar
+        var avatarEl = document.getElementById('aspAvatar');
+        if (avatarEl) avatarEl.src = img || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=00e0d0&color=000&size=200');
+
+        // Set name
+        var nameEl = document.getElementById('aspName');
+        if (nameEl) nameEl.textContent = name;
+
+        // Set follow button state
+        updateFollowBtn();
+
+        // Reset songs
+        var songsList = document.getElementById('aspSongsList');
+        if (songsList) songsList.innerHTML = '<div class="asp-loading">Loading...</div>';
+        artistSongs = [];
+
+        // Open panel
+        panel.classList.add('open');
+
+        // Fetch songs
+        try {
+            var pget = window.pget;
+            if (!pget) return;
+
+            var d = await pget('/search?q=' + encodeURIComponent(name + ' official video') + '&filter=videos');
+            var items = (d.items || []).filter(function(v) { return v.url && v.title; }).slice(0, 20);
+
+            if (!songsList) return;
+            if (items.length === 0) {
+                songsList.innerHTML = '<div class="asp-loading">No songs found</div>';
+                return;
+            }
+
+            songsList.innerHTML = '';
+            items.forEach(function(v, idx) {
+                var vid = (v.url || '').replace('/watch?v=', '');
+                artistSongs.push({
+                    id: vid,
+                    title: v.title,
+                    artist: v.uploaderName || name,
+                    thumbnail: v.thumbnail || ''
+                });
+
+                var row = document.createElement('div');
+                row.className = 'asp-song-row';
+                row.innerHTML =
+                    '<img src="' + (v.thumbnail || '') + '" onerror="this.style.opacity=0.3">' +
+                    '<div class="asp-song-info">' +
+                        '<div class="asp-song-title">' + (v.title || '').replace(/</g, '&lt;') + '</div>' +
+                        '<div class="asp-song-sub">' + (v.uploaderName || '').replace(/</g, '&lt;') + '</div>' +
+                    '</div>';
+
+                row.onclick = function() {
+                    playFromPanel(idx);
+                };
+                songsList.appendChild(row);
+            });
+        } catch(e) {
+            if (songsList) songsList.innerHTML = '<div class="asp-loading">Could not load songs</div>';
+        }
+    };
+
+    function playFromPanel(idx) {
+        if (!artistSongs[idx]) return;
+        var queue = artistSongs.map(function(x) {
+            return {
+                id: { videoId: x.id },
+                snippet: {
+                    title: x.title,
+                    channelTitle: x.artist,
+                    thumbnails: { default: { url: x.thumbnail }, high: { url: x.thumbnail } }
+                }
+            };
+        });
+        window.ytResults = queue;
+        window.playQueue = queue;
+        if (typeof window.playYoutube === 'function') window.playYoutube(idx);
+        // Close panel automatically after song starts
+        window.closeArtistSidePanel();
+    }
+
+    window.closeArtistSidePanel = function() {
+        var panel = document.getElementById('artistSidePanel');
+        if (panel) panel.classList.remove('open');
+    };
+
+    window.aspToggleFollow = function() {
+        if (!currentArtist.name) return;
+        if (typeof window.toggleFollow === 'function') {
+            window.toggleFollow(currentArtist.name, null, null);
+        }
+        updateFollowBtn();
+    };
+
+    function updateFollowBtn() {
+        var btn = document.getElementById('aspFollowBtn');
+        if (!btn) return;
+        var isF = (window.followedArtists || []).some(function(a) {
+            return a.name.toLowerCase() === currentArtist.name.toLowerCase();
+        });
+        btn.textContent = isF ? 'Following' : 'Follow';
+        btn.classList.toggle('following', isF);
+    }
+
+    // Override the avatar click on the end screen
+    setInterval(function() {
+        var av = document.getElementById('esAvatar');
+        if (!av || av._aspBound) return;
+        av._aspBound = true;
+
+        var originalClick = av.onclick;
+        av.onclick = function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            // Get current artist from the player
+            var artistName = '';
+            var artistImg = '';
+            try {
+                if (window.ytResults && window.ytResults[window.currentIndex]) {
+                    artistName = window.ytResults[window.currentIndex].snippet.channelTitle || '';
+                }
+                var avImg = av.querySelector('img');
+                if (avImg) artistImg = avImg.src;
+            } catch(e) {}
+            if (artistName) {
+                window.openArtistSidePanel(artistName, artistImg);
+            }
+        };
+    }, 500);
+})();
+// END ARTIST SIDE PANEL
