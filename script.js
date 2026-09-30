@@ -2902,3 +2902,30 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(renderFavs, 2000);
 })();
 // END MY PLAYLIST - FAVORITES
+
+// FAVORITES LONG-PRESS - FIX CHROME NATIVE MENU
+(function() {
+    // Block context menu on favorite cards
+    document.addEventListener('contextmenu', function(e) {
+        if (e.target.closest('.pl-fav-card')) {
+            e.preventDefault();
+            return false;
+        }
+    }, true);
+
+    // Block Chrome's long-press text/image menu
+    document.addEventListener('touchstart', function(e) {
+        if (e.target.closest('.pl-fav-card')) {
+            // The touchstart handler in the favorites code already handles the timer
+            // This just prevents Chrome from showing its own menu
+        }
+    }, { passive: true });
+
+    // Override -webkit-touch-callout via CSS (already added) + block mousedown long
+    document.addEventListener('mousedown', function(e) {
+        if (e.target.closest('.pl-fav-card')) {
+            if (e.button === 2) e.preventDefault(); // right-click
+        }
+    }, true);
+})();
+// END FAVORITES LONG-PRESS FIX
