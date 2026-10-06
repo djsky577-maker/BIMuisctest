@@ -1788,3 +1788,22 @@ body { background: #050505 !important; }
     right: 15px !important;
     z-index: 502 !important;
 }
+
+/* ============================================
+   Push ALL bottom-right back buttons higher
+   ============================================ */
+#fullPlayer [class*="back"],
+#fullPlayer [id*="back"],
+#fullPlayer [class*="close"],
+#fullPlayer [id*="close"] {
+    bottom: 130px !important;
+    top: auto !important;
+    z-index: 503 !important;
+}
+
+/* Also target any fixed element in full player bottom-right */
+#fullPlayer > div > button,
+#fullPlayer > button {
+    bottom: 130px !important;
+    z-index: 503 !important;
+}
