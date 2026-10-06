@@ -1807,3 +1807,31 @@ body { background: #050505 !important; }
     bottom: 130px !important;
     z-index: 503 !important;
 }
+
+/* ============================================
+   FORCE: back button same line as scroll-up
+   ============================================ */
+
+/* Kill any previous override first */
+#fullPlayer [class*="back"],
+#fullPlayer [id*="back"],
+#fullPlayer [class*="close"],
+#fullPlayer [id*="close"],
+#fullPlayer > div > button,
+#fullPlayer > button {
+    bottom: auto !important;
+    top: auto !important;
+}
+
+/* Now force them to match the scroll-up button */
+#fullPlayer [class*="back"],
+#fullPlayer [id*="back"],
+#fullPlayer [class*="close"],
+#fullPlayer [id*="close"] {
+    position: fixed !important;
+    bottom: 90px !important;
+    right: 15px !important;
+    top: auto !important;
+    left: auto !important;
+    z-index: 502 !important;
+}
