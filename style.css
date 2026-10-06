@@ -1668,3 +1668,67 @@ body { background: #050505 !important; }
     width: 18px !important;
     height: 18px !important;
 }
+
+/* ============================================
+   FIX: Move artist modal back button higher
+   ============================================ */
+.artist-modal .back-btn {
+    margin-top: 20px !important;
+    margin-bottom: 20px !important;
+    position: relative !important;
+    top: 0 !important;
+    z-index: 10 !important;
+    padding: 10px 0 !important;
+}
+
+/* If the back button is fixed, push it down from the top */
+.artist-modal > .back-btn {
+    position: absolute !important;
+    top: 80px !important;
+    left: 20px !important;
+    margin: 0 !important;
+}
+
+/* ============================================
+   FIX: Style mini-player buttons (the real class)
+   ============================================ */
+.mini-player .mini-btn {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    border-radius: 50% !important;
+    background: rgba(0, 224, 208, 0.15) !important;
+    border: 1px solid rgba(0, 224, 208, 0.4) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    transition: all 0.2s ease !important;
+}
+
+.mini-player .mini-btn:active {
+    transform: scale(0.9) !important;
+    background: rgba(0, 224, 208, 0.35) !important;
+}
+
+.mini-player .mini-btn svg {
+    width: 20px !important;
+    height: 20px !important;
+    fill: #00e0d0 !important;
+}
+
+/* Make the FIRST button (play/pause) larger and more prominent */
+.mini-player .mini-btn:first-of-type {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    background: linear-gradient(135deg, #00e0d0, #008f85) !important;
+    box-shadow: 0 4px 15px rgba(0, 224, 208, 0.5) !important;
+    margin-left: auto !important;
+}
+
+.mini-player .mini-btn:first-of-type svg {
+    fill: #000 !important;
+}
