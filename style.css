@@ -1432,3 +1432,144 @@ body { background: #050505 !important; }
     0%, 100% { transform: translate(-50%, -50%) scale(1); }
     50%      { transform: translate(-50%, -50%) scale(1.06); }
 }
+
+/* ============================================
+   NEW UI — FLOATING PILLS (keep colors)
+   ============================================ */
+
+/* Bottom navigation — floating glass pill */
+.bottom-nav {
+    position: fixed !important;
+    bottom: 12px !important;
+    left: 16px !important;
+    right: 16px !important;
+    width: auto !important;
+    height: 64px !important;
+    border-radius: 32px !important;
+    background: rgba(10, 10, 15, 0.85) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(0, 224, 208, 0.25) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 224, 208, 0.15) !important;
+    padding: 0 12px !important;
+    display: flex !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    z-index: 500 !important;
+}
+
+.bottom-nav .nav-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    padding: 6px 10px !important;
+    border-radius: 20px !important;
+    color: rgba(255, 255, 255, 0.55) !important;
+    font-size: 10px !important;
+    transition: all 0.25s ease !important;
+    cursor: pointer !important;
+}
+
+.bottom-nav .nav-item svg {
+    width: 22px !important;
+    height: 22px !important;
+    fill: currentColor !important;
+}
+
+.bottom-nav .nav-item.active {
+    color: #00e0d0 !important;
+    background: rgba(0, 224, 208, 0.12) !important;
+    box-shadow: 0 0 15px rgba(0, 224, 208, 0.3) !important;
+}
+
+/* Mini-player — floating pill */
+.mini-player {
+    position: fixed !important;
+    bottom: 88px !important;
+    left: 16px !important;
+    right: 16px !important;
+    width: auto !important;
+    height: 64px !important;
+    border-radius: 32px !important;
+    background: rgba(15, 15, 20, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(0, 224, 208, 0.2) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 224, 208, 0.1) !important;
+    padding: 8px 12px !important;
+    display: none;
+    align-items: center !important;
+    gap: 10px !important;
+    z-index: 501 !important;
+}
+
+.mini-player.active {
+    display: flex !important;
+}
+
+.mini-player img {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 2px solid rgba(0, 224, 208, 0.4) !important;
+    flex-shrink: 0 !important;
+}
+
+.mini-player .mini-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+
+.mini-player .mini-title {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #fff !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.mini-player .mini-artist {
+    font-size: 11px !important;
+    color: #888 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin-top: 2px !important;
+}
+
+/* Play button in mini-player — protrudes */
+.mini-player .mini-play-btn {
+    width: 52px !important;
+    height: 52px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #00e0d0, #008f85) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: -16px !important;
+    box-shadow: 0 8px 20px rgba(0, 224, 208, 0.5), 0 0 25px rgba(0, 224, 208, 0.3) !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+}
+
+.mini-player .mini-play-btn svg {
+    fill: #000 !important;
+    width: 22px !important;
+    height: 22px !important;
+}
+
+/* Make sure content has room for the pills */
+#mainContent,
+.full-content {
+    padding-bottom: 170px !important;
+}
+
+/* Full player gets a bit of bottom padding too */
+#fullContent {
+    padding-bottom: 40px !important;
+}
