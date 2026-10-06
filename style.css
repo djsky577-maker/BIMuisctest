@@ -1754,3 +1754,28 @@ body { background: #050505 !important; }
 .mini-player.active {
     display: flex !important;
 }
+
+/* ============================================
+   FIX: Move bottom-right back button higher
+   ============================================ */
+#fullPlayer .back-btn,
+#fullPlayer [onclick*="closeFullPlayer"],
+#fullPlayer [onclick*="close"],
+#fullPlayer .close-btn,
+#fullPlayer button.close {
+    bottom: 100px !important;
+    right: 15px !important;
+    z-index: 502 !important;
+}
+
+/* Also target the black circular back button */
+#fullPlayer [class*="back"],
+#fullPlayer [class*="close"] {
+    bottom: 100px !important;
+}
+
+/* If it's a floating button with inline bottom value */
+#fullPlayer > button[onclick*="close"],
+#fullPlayer > div > button[onclick*="close"] {
+    bottom: 100px !important;
+}
