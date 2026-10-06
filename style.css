@@ -1732,3 +1732,25 @@ body { background: #050505 !important; }
 .mini-player .mini-btn:first-of-type svg {
     fill: #000 !important;
 }
+
+/* ============================================
+   FIX: Hide floating pills until logged in
+   ============================================ */
+
+/* Bottom nav — hidden by default, only shown with .active */
+.bottom-nav {
+    display: none !important;
+}
+.bottom-nav.active {
+    display: flex !important;
+}
+
+/* Mini-player — hidden by default, only shown with .active */
+#miniPlayer,
+.mini-player {
+    display: none !important;
+}
+#miniPlayer.active,
+.mini-player.active {
+    display: flex !important;
+}
