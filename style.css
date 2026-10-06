@@ -1779,3 +1779,12 @@ body { background: #050505 !important; }
 #fullPlayer > div > button[onclick*="close"] {
     bottom: 100px !important;
 }
+
+/* Push the bottom-right back button higher */
+#fullPlayer .back-btn,
+#fullPlayer [onclick*="closeFullPlayer"],
+#fullPlayer [onclick*="close"] {
+    bottom: 110px !important;
+    right: 15px !important;
+    z-index: 502 !important;
+}
