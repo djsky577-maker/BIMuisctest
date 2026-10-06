@@ -1573,3 +1573,98 @@ body { background: #050505 !important; }
 #fullContent {
     padding-bottom: 40px !important;
 }
+
+/* ============================================
+   FORCE-FIX: Mini-player as small floating pill
+   This overrides all previous conflicting rules
+   ============================================ */
+#miniPlayer, .mini-player {
+    position: fixed !important;
+    bottom: 88px !important;
+    left: 50% !important;
+    right: auto !important;
+    top: auto !important;
+    transform: translateX(-50%) !important;
+    width: auto !important;
+    min-width: 300px !important;
+    max-width: 90% !important;
+    height: 60px !important;
+    border-radius: 30px !important;
+    border: 1px solid rgba(0, 224, 208, 0.35) !important;
+    border-top: 1px solid rgba(0, 224, 208, 0.35) !important;
+    background: rgba(15, 15, 20, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 224, 208, 0.2) !important;
+    padding: 6px 14px 6px 6px !important;
+    display: none;
+    align-items: center !important;
+    gap: 12px !important;
+    z-index: 501 !important;
+    box-sizing: border-box !important;
+}
+
+#miniPlayer.active, .mini-player.active {
+    display: flex !important;
+}
+
+/* Album art — circular, small */
+#miniPlayer img, .mini-player img {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 2px solid rgba(0, 224, 208, 0.4) !important;
+    flex-shrink: 0 !important;
+}
+
+/* Info — text container */
+#miniPlayer .mini-info, .mini-player .mini-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+
+#miniPlayer .mini-title, .mini-player .mini-title {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #fff !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.2 !important;
+}
+
+#miniPlayer .mini-artist, .mini-player .mini-artist {
+    font-size: 11px !important;
+    color: #888 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin-top: 2px !important;
+}
+
+/* Play button — circular, glowing teal, centered vertically */
+#miniPlayer .mini-play-btn, .mini-player .mini-play-btn,
+#miniPlayer button, .mini-player button {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #00e0d0, #008f85) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 15px rgba(0, 224, 208, 0.5) !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+#miniPlayer .mini-play-btn svg, .mini-player .mini-play-btn svg,
+#miniPlayer button svg, .mini-player button svg {
+    fill: #000 !important;
+    width: 18px !important;
+    height: 18px !important;
+}
