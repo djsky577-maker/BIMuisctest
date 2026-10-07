@@ -1928,3 +1928,70 @@ body { background: #050505 !important; }
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
+
+/* mini-player: YouTube Music style compact bar */
+#miniPlayer {
+  position: fixed !important;
+  left: 12px !important;
+  right: 12px !important;
+  bottom: 78px !important;
+  height: 56px !important;
+  padding: 6px 8px 6px 6px !important;
+  border-radius: 28px !important;
+  display: none !important;
+  align-items: center !important;
+  gap: 10px !important;
+  background: rgba(20, 20, 25, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+  z-index: 9999 !important;
+}
+#miniPlayer.active, .mini-player.active {
+  display: flex !important;
+}
+#miniPlayer img, .mini-player img {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+}
+#miniPlayer .mini-info, .mini-player .mini-info {
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+#miniPlayer .mini-title, .mini-player .mini-title {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+#miniPlayer .mini-artist, .mini-player .mini-artist {
+  font-size: 11px !important;
+  color: #999 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+#miniPlayer .mini-btn, .mini-player .mini-btn {
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+#miniPlayer .mini-btn svg, .mini-player .mini-btn svg {
+  width: 20px !important;
+  height: 20px !important;
+  fill: #fff !important;
+}
