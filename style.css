@@ -1995,3 +1995,31 @@ body { background: #050505 !important; }
   height: 20px !important;
   fill: #fff !important;
 }
+
+
+/* mini-player: compact half height */
+#miniPlayer {
+  height: 33px !important;
+  bottom: 78px !important;
+  padding: 3px 6px 3px 3px !important;
+  border-radius: 16px !important;
+  gap: 6px !important;
+}
+#miniPlayer img, .mini-player img {
+  width: 27px !important;
+  height: 27px !important;
+}
+#miniPlayer .mini-title, .mini-player .mini-title {
+  font-size: 10px !important;
+}
+#miniPlayer .mini-artist, .mini-player .mini-artist {
+  font-size: 8px !important;
+}
+#miniPlayer .mini-btn, .mini-player .mini-btn {
+  width: 24px !important;
+  height: 24px !important;
+}
+#miniPlayer .mini-btn svg, .mini-player .mini-btn svg {
+  width: 13px !important;
+  height: 13px !important;
+}
