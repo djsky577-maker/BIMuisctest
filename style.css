@@ -1896,3 +1896,13 @@ body { background: #050505 !important; }
   position: fixed !important;
   bottom: 76px !important;
 }
+
+/* mini-player above the new curved bottom nav */
+#miniPlayer {
+  z-index: 2147483000 !important;
+  bottom: 90px !important;
+  display: flex !important;
+  position: fixed !important;
+  left: 8px !important;
+  right: 8px !important;
+}
