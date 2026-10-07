@@ -1889,3 +1889,10 @@ body { background: #050505 !important; }
 .mini-player, #miniPlayer {
   z-index: 9000 !important;
 }
+
+/* force mini-player above profile view */
+#miniPlayer, .mini-player {
+  z-index: 99999 !important;
+  position: fixed !important;
+  bottom: 76px !important;
+}
