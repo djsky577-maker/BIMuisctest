@@ -1829,10 +1829,9 @@ body { background: #050505 !important; }
 #fullPlayer [class*="close"],
 #fullPlayer [id*="close"] {
     position: fixed !important;
-    bottom: 150px !important;
+    bottom: 90px !important;
     right: 15px !important;
     top: auto !important;
     left: auto !important;
     z-index: 502 !important;
 }
-

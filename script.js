@@ -574,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 #backBtnSmart {
                     display: flex;
                     position: fixed;
-                    bottom: 150px;
+                    bottom: 90px;
                     right: 15px;
                     z-index: 999999;
                     background: rgba(0, 0, 0, 0.88);
@@ -684,7 +684,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 #updateBtnSmart {
                     display: none;
                     position: fixed;
-                    bottom: 150px;
+                    bottom: 90px;
                     right: 15px;
                     z-index: 999998;
                     background: linear-gradient(135deg, #00e0d0, #008f85);
