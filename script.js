@@ -95,7 +95,7 @@ for(var b=0;b<3;b++){
       artistSongPool.push(obj);
       var ix=artistSongPool.length-1;
       var el=document.createElement('div');el.className='list-item';
-      el.onclick=function(){playQueue=artistSongPool.map(function(x){return{id:{videoId:x.id},snippet:{title:x.title,channelTitle:x.channelTitle,thumbnails:{default:{url:x.thumbnail},high:{url:x.thumbnail}}}};});ytResults=playQueue;playYoutube(ix);};
+      el.onclick=function(){document.querySelectorAll('.list-item.playing-now').forEach(function(n){n.classList.remove('playing-now');});el.classList.add('playing-now');playQueue=artistSongPool.map(function(x){return{id:{videoId:x.id},snippet:{title:x.title,channelTitle:x.channelTitle,thumbnails:{default:{url:x.thumbnail},high:{url:x.thumbnail}}}};});ytResults=playQueue;playYoutube(ix);};
       el.innerHTML='<img src="'+obj.thumbnail+'"><div class="list-info"><div class="list-title">'+obj.title+'</div><div class="list-sub">'+obj.channelTitle+'</div></div><button class="dl-btn" onclick="event.stopPropagation();dlId(\''+vid+'\')"><svg viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg></button>';
       sc.appendChild(el);
     });

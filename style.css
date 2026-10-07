@@ -1847,3 +1847,8 @@ body { background: #050505 !important; }
 
 /* hide the update pill for now */
 #updateBtnSmart { display: none !important; }
+
+/* highlight currently playing song in lists */
+.list-item.playing-now { background: rgba(0, 224, 208, 0.12) !important; border: 1px solid rgba(0, 224, 208, 0.5) !important; }
+.list-item.playing-now .list-title { color: #00e0d0 !important; }
+.list-item.playing-now .list-sub { color: rgba(0, 224, 208, 0.75) !important; }
