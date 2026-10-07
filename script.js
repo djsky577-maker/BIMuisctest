@@ -572,10 +572,10 @@ document.addEventListener('DOMContentLoaded', function() {
             style.id = 'backBtnStyle';
             style.textContent = `
                 #backBtnSmart {
-                    display: none;
+                    display: flex;
                     position: fixed;
-                    bottom: 90px;
-                    right: 15px;
+                    top: 14px;
+                    left: 14px;
                     z-index: 999999;
                     background: rgba(0, 0, 0, 0.88);
                     border: 1px solid rgba(255, 255, 255, 0.25);
