@@ -1884,3 +1884,8 @@ body { background: #050505 !important; }
   position: absolute !important;
   right: 0 !important;
 }
+
+/* make mini-player always visible above all tabs */
+.mini-player, #miniPlayer {
+  z-index: 9000 !important;
+}
