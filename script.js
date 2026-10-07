@@ -574,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 #backBtnSmart {
                     display: flex;
                     position: fixed;
-                    bottom: 90px;
+                    bottom: 150px;
                     right: 15px;
                     z-index: 999999;
                     background: rgba(0, 0, 0, 0.88);
