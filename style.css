@@ -1885,40 +1885,15 @@ body { background: #050505 !important; }
   right: 0 !important;
 }
 
-/* make mini-player always visible above all tabs */
-.mini-player, #miniPlayer {
-  z-index: 9000 !important;
-}
 
-/* force mini-player above profile view */
-#miniPlayer, .mini-player {
-  z-index: 99999 !important;
-  position: fixed !important;
-  bottom: 76px !important;
-}
-
-/* mini-player above the new curved bottom nav */
+/* mini-player: single source of truth */
 #miniPlayer {
-  z-index: 2147483000 !important;
-  bottom: 90px !important;
+  position: fixed !important;
+  left: 10px !important;
+  right: 10px !important;
+  bottom: 80px !important;
+  z-index: 9999 !important;
+}
+#miniPlayer.active, .mini-player.active {
   display: flex !important;
-  position: fixed !important;
-  left: 8px !important;
-  right: 8px !important;
-}
-
-/* put mini-player right above the bottom nav */
-#miniPlayer {
-  bottom: 80px !important;
-  left: 10px !important;
-  right: 10px !important;
-  z-index: 200 !important;
-}
-
-/* put mini-player right above the bottom nav */
-#miniPlayer {
-  bottom: 80px !important;
-  left: 10px !important;
-  right: 10px !important;
-  z-index: 200 !important;
 }
