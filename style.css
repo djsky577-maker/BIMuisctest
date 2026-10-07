@@ -1997,14 +1997,6 @@ body { background: #050505 !important; }
 }
 
 
-/* mini-player: compact half height */
-#miniPlayer {
-  height: 33px !important;
-  bottom: 78px !important;
-  padding: 3px 6px 3px 3px !important;
-  border-radius: 16px !important;
-  gap: 6px !important;
-}
 #miniPlayer img, .mini-player img {
   width: 27px !important;
   height: 27px !important;
@@ -2022,4 +2014,35 @@ body { background: #050505 !important; }
 #miniPlayer .mini-btn svg, .mini-player .mini-btn svg {
   width: 13px !important;
   height: 13px !important;
+}
+
+/* mini-player: bigger, half width, centered */
+#miniPlayer {
+  height: 56px !important;
+  width: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  bottom: 78px !important;
+  padding: 6px 8px !important;
+  border-radius: 28px !important;
+  gap: 8px !important;
+}
+#miniPlayer img, .mini-player img {
+  width: 40px !important;
+  height: 40px !important;
+}
+#miniPlayer .mini-title, .mini-player .mini-title {
+  font-size: 13px !important;
+}
+#miniPlayer .mini-artist, .mini-player .mini-artist {
+  font-size: 10px !important;
+}
+#miniPlayer .mini-btn, .mini-player .mini-btn {
+  width: 32px !important;
+  height: 32px !important;
+}
+#miniPlayer .mini-btn svg, .mini-player .mini-btn svg {
+  width: 18px !important;
+  height: 18px !important;
 }
