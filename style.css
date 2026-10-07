@@ -1897,3 +1897,11 @@ body { background: #050505 !important; }
 #miniPlayer.active, .mini-player.active {
   display: flex !important;
 }
+
+/* force mini-player full width */
+#miniPlayer {
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  transform: none !important;
+}
