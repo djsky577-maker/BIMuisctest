@@ -1,0 +1,256 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>B.I 🎵</title>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00e0d0">
+
+
+
+<link rel="stylesheet" href="style.css">
+
+<meta name="description" content="B.I Music - Stream Afrobeats, Hip Hop, R&B and more. Free music app with lyrics, artist radio, trending songs. Download the app now!">
+<meta name="keywords" content="B.I Music, BIMusic, music app, afrobeats, hip hop, rnb, amapiano, stream music, djsky577">
+<meta name="author" content="djsky577-maker">
+<meta name="theme-color" content="#00e0d0">
+
+<!-- Open Graph (for WhatsApp, Facebook, etc.) -->
+<meta property="og:title" content="B.I Music - Stream Music Free">
+<meta property="og:description" content="Stream Afrobeats, Hip Hop, R&B and more. Free music app with lyrics, artist radio, and trending songs.">
+<meta property="og:url" content="https://djsky577-maker.github.io/BIMusic/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://djsky577-maker.github.io/BIMusic/logo_512_final.png">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="B.I Music - Stream Music Free">
+<meta name="twitter:description" content="Stream Afrobeats, Hip Hop, R&B and more. Free music app.">
+<meta name="twitter:image" content="https://djsky577-maker.github.io/BIMusic/logo_512_final.png">
+
+<!-- SEO: Tell Google the page title -->
+<title>B.I Music - Stream Free Music</title>
+
+<meta name="google-site-verification" content="Kjq2xTzk_WSZTcH4UzfI_6t7aLl4TU1kvZUo5-xLnYI" />
+</head><body>
+<div class="header" id="mainHeader" style="display:none">
+<div style="width:22px"></div>
+<div class="logo" style="text-align:center;flex:1">B<span>.</span>I</div>
+<svg viewBox="0 0 24 24" onclick="logout()"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+</div>
+<div class="search-row" id="mainSearchRow" style="display:none"><input id="mainSearchInput" placeholder="Search songs, artists..."><button onclick="mainSearchGo()">Search</button></div>
+<div class="nav-tabs" id="mainNavTabs" style="display:none">
+<div class="nav-tab active" onclick="switchHomeTab('home',this)">Home</div>
+<div class="nav-tab" onclick="switchHomeTab('trending',this)">Trending</div>
+<div class="nav-tab" onclick="switchHomeTab('mixtape',this)">Mixtapes</div>
+<div class="nav-tab" onclick="switchHomeTab('artists',this)">Artists</div>
+<div class="nav-tab" onclick="switchHomeTab('genres',this)">Genres</div>
+</div>
+<div class="main-content" id="mainContent">
+<div class="view active" id="view-auth"><div class="auth-box"><h2 id="authTitle">Log In</h2><p class="sub" id="authSubtitle">Welcome back to B.I Music</p><div class="auth-error" id="authError"></div>
+
+<a id="downloadApkBtn" href="https://drive.google.com/uc?export=download&id=1wF7LiFeCwp2HJWNHyC2Xmd-fVyAWKxsU" target="_blank">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg>
+    Download B.I Music App
+</a>
+<input type="email" id="authEmail" placeholder="Email address"><input type="password" id="authPassword" placeholder="Password"><button id="authBtn" onclick="handleAuth()">Log In</button><button class="secondary" onclick="toggleAuthMode()" id="authSwitchBtn">Need an account? Register</button></div></div>
+<div class="view" id="view-home">
+<div class="home-tab" id="tab-home" style="display:block">
+<div class="hero"><div class="hero-content"><div class="tag">GOOD VIBES ONLY</div><h2>Music for<br>every mood</h2><p>Discover new songs, artists and playlists.</p><button onclick="playHeroSong()"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Play Now</button></div></div>
+<div class="section" id="forYouSection"><div class="section-header"><h3>💚 For You</h3></div><div class="scroll-x" id="forYou"></div></div>
+<div class="section"><div class="section-header"><h3>Recently Played</h3></div><div class="scroll-x" id="recentlyPlayed"></div></div>
+<div class="section"><div class="section-header"><h3>Popular Artists</h3></div><div class="artist-grid" id="popularArtists"></div></div>
+<div class="section"><div class="section-header"><h3>My Artists</h3></div><div class="artist-grid" id="followedArtists"></div></div>
+<div class="section"><div class="section-header"><h3>You Might Like</h3></div><div class="scroll-x" id="youMightLike"></div></div>
+</div>
+<div class="home-tab" id="tab-trending" style="display:none"><div class="section-header"><h3>🔥 Trending Songs</h3></div><div id="trendingList"></div><div class="load-more-wrap" id="trendingLoadBtn" style="display:none"><button onclick="loadTrending()">Load More</button></div><div class="section-header" style="margin-top:22px"><h3>✨ New Releases</h3></div><div id="hotList"></div><div class="load-more-wrap" id="hotLoadBtn" style="display:none"><button onclick="loadHot()">Load More</button></div></div>
+<div class="home-tab" id="tab-mixtape" style="display:none"><div class="section-header"><h3>🎧 Mixtapes & Nonstop</h3></div><div id="mixtapeList"></div><div class="load-more-wrap" id="mixLoadBtn" style="display:none"><button onclick="loadMixtapes()">Load More</button></div></div>
+<div class="home-tab" id="tab-artists" style="display:none"><div class="search-row" style="padding:0 0 14px 0"><input id="artistSearchInput" placeholder="Search artist..."><button onclick="searchArtist()">Go</button></div><div class="artist-grid" id="artistsList"></div><div class="load-more-wrap" id="artistLoadBtn" style="display:none"><button onclick="loadArtistsNext()">Load More</button></div></div>
+<div class="home-tab" id="tab-genres" style="display:none"><div class="genre-grid"><div class="genre-card" style="background:linear-gradient(135deg,#ff416c,#ff4b2b)" onclick="searchGenre('Afrobeat')"><span>Afrobeat</span></div><div class="genre-card" style="background:linear-gradient(135deg,#1e9600,#fff200)" onclick="searchGenre('Hip Hop')"><span>Hip Hop</span></div><div class="genre-card" style="background:linear-gradient(135deg,#00b4db,#0083b0)" onclick="searchGenre('Chill')"><span>Chill</span></div><div class="genre-card" style="background:linear-gradient(135deg,#7b4397,#dc2430)" onclick="searchGenre('Dancehall')"><span>Dancehall</span></div><div class="genre-card" style="background:linear-gradient(135deg,#f12711,#f5af19)" onclick="searchGenre('Gospel')"><span>Gospel</span></div><div class="genre-card" style="background:linear-gradient(135deg,#11998e,#38ef7d)" onclick="searchGenre('Amapiano')"><span>Amapiano</span></div></div><div id="genreResults" style="margin-top:16px"></div></div>
+</div>
+<div class="view" id="view-search"><div class="search-row" style="padding:0 0 14px 0"><input id="ytSearchInput" placeholder="Search YouTube..."><button onclick="searchYouTube()">Search</button></div><div id="ytResults"></div></div>
+<div class="view" id="view-library"><div class="pl-fav-section" style="margin-bottom:20px;"><div class="section-header"><h3>❤️ My Favorites</h3></div><div id="plFavRow" style="display:flex;gap:8px;overflow-x:auto;padding:8px 18px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div><div id="plFavScrollLine"><div id="plFavScrollLineFill"></div></div><div id="plFavScrollLine"><div id="plFavScrollLineFill"></div></div></div><div class="pl-artists-section"><div class="section-header"><h3>👥 Artists You Follow</h3></div><div id="plArtistsRow1" class="pl-artist-row"></div><div id="plArtistsRow2" class="pl-artist-row"></div></div><div class="section-header"><h3>My Uploads</h3></div><div id="myUploadsList"></div></div>
+<div class="view" id="view-profile">
+<div class="profile-box"><div class="avatar">B</div><div style="font-weight:700;margin-bottom:4px">B.I Music</div><div class="email" id="profileEmail">-</div></div>
+<div class="desc-box"><p>🎵 Welcome to B.I Music — stream and download your favorite tunes. Share this app with friends and family to show some love! ❤️</p><div class="author">Created by Erisa Mugabi 🇺🇬</div></div>
+<button class="profile-btn share" onclick="shareApp()">🔗 Share B.I Music</button>
+<div class="profile-section-title">CREATOR TOOLS</div>
+<button class="profile-btn coming-soon" onclick="comingSoon('Artist Dashboard')"><span>📊 Artist Dashboard</span><span class="soon-badge">COMING SOON</span></button>
+<button class="profile-btn coming-soon" onclick="comingSoon('Upload Music')"><span>➕ Upload Music</span><span class="soon-badge">COMING SOON</span></button>
+<button class="profile-btn coming-soon" onclick="comingSoon('Promote Your Music')"><span>🚀 Promote Your Music</span><span class="soon-badge">COMING SOON</span></button>
+<div class="profile-section-title">SUPPORT</div>
+<button class="profile-btn contact" onclick="contactUs()"><svg viewBox="0 0 24 24"><path d="M20.5 3.5C18.6 1.6 15.8 1 13.5 1 7.1 1 2 6.1 2 12.5c0 2 .5 4 1.5 5.7L2 23l5-1.3c1.6.9 3.5 1.4 5.4 1.4h.1c6.4 0 11.5-5.1 11.5-11.5 0-2.3-.6-5.1-2.5-6.1zM13.5 21c-1.7 0-3.4-.5-4.9-1.4l-.3-.2-3.6 1 1-3.5-.2-.3c-1-1.5-1.5-3.3-1.5-5.1C4 7.1 8.1 3 13.5 3c2 0 3.9.5 5.6 1.9 1.7 1.4 2.4 3.5 2.4 5.6 0 5.4-4.1 9.5-9.5 9.5z"/></svg>Contact Us on WhatsApp</button>
+<button id="profileUpdateBtn" onclick="triggerProfileUpdate()">
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
+        <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:#00e0d0;filter:drop-shadow(0 0 6px rgba(0,224,208,0.8));flex-shrink:0;">
+            <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+        </svg>
+        <span>Check for Updates</span>
+    </div>
+</button>
+
+<button class="profile-btn danger" onclick="logout()">Log Out</button>
+</div>
+</div>
+<div class="artist-modal" id="artistModal"><button class="back-btn" onclick="closeArtistModal()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</button><div class="artist-hero"><div class="artist-hero-img"><img id="modalArtistImg" src=""></div><div class="artist-hero-name" id="modalArtistName">Artist</div><div class="artist-hero-stats" id="modalArtistStats"></div><button class="artist-follow-btn" id="modalFollowBtn" onclick="toggleFollowCurrentArtist()">Follow</button><button id="artistRadioBtn" onclick="if(window.startArtistRadio)window.startArtistRadio()" style="display:flex !important;align-items:center;justify-content:center;gap:10px;width:90%;max-width:320px;margin:14px auto 10px auto;padding:14px 20px;background:linear-gradient(135deg,rgba(0,224,208,0.25),rgba(0,143,133,0.15));backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1.5px solid rgba(0,224,208,0.7);border-radius:14px;color:#00e0d0;font-size:14px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer;box-shadow:0 8px 25px rgba(0,224,208,0.4);font-family:inherit;"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:#00e0d0;filter:drop-shadow(0 0 8px rgba(0,224,208,0.8));"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12a2 2 0 002 2h16a2 2 0 002-2V8c0-.83-.51-1.57-1.24-1.85L12 1 3.24 6.15zM12 4.15l6.16 3.4-5.5 3.03L7 7.55l5-3.4z"/></svg>▶ Play Artist Radio</button></div><div class="artist-section-title">Popular Songs</div><div id="modalArtistSongs"></div></div>
+<div class="mini-player" id="miniPlayer" onclick="openFullPlayer()"><img id="miniArt" src=""><div class="mini-info"><div class="mini-title" id="miniTitle">No song</div><div class="mini-artist" id="miniArtist">—</div></div><button class="mini-btn" onclick="event.stopPropagation();togglePlay()"><svg id="miniPlayIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><svg id="miniPauseIcon" viewBox="0 0 24 24" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></button><button class="mini-btn" onclick="event.stopPropagation();nextTrack()"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button></div>
+<div class="full-player" id="fullPlayer">
+<div class="full-content" id="fullContent">
+<div class="full-sticky-logo">B<span>.</span>I</div>
+<div class="full-header"><svg viewBox="0 0 24 24" onclick="closeFullPlayer()"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg><span style="font-size:.7rem;color:#7a7a8a;letter-spacing:2px">NOW PLAYING</span><svg viewBox="0 0 24 24" id="fullHeart" onclick="toggleLikeCurrent()"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+<div class="full-art" id="fullArtBox"><div id="endScreenOverlay" class="es-overlay"><div class="es-avatar" id="esAvatar"></div><div class="es-card es-card-tl" id="esCard1"></div><div class="es-card es-card-tr" id="esCard2"></div><div class="es-card es-card-bl" id="esCard3"></div><div class="es-card es-card-br" id="esCard4"></div><div id="esAutoSelectMsg">🎯 AUTO-SELECTING...</div></div><div id="artistSidePanel" class="asp-panel"><div class="asp-header"><button class="asp-close" onclick="window.closeArtistSidePanel()">✕</button></div><div class="asp-body"><div class="asp-avatar-wrap"><img id="aspAvatar" class="asp-avatar" src=""><div id="aspName" class="asp-name">Artist</div></div><button id="aspFollowBtn" class="asp-follow-btn" onclick="window.aspToggleFollow()">Follow</button><div class="asp-songs-title">Popular Songs</div><div id="aspSongsList" class="asp-songs-list"><div class="asp-loading">Loading...</div></div></div></div>
+
+<div id="youtube-player"></div><img id="fullArt" src=""></div>
+<div class="full-info"><div class="full-title" id="fullTitle">No song</div><div class="full-artist" id="fullArtist">—</div></div>
+<div class="full-progress"><input type="range" id="fullProgress" value="0" min="0" max="100"><div class="full-times"><span id="fullCurrent">0:00</span><span id="fullDuration">0:00</span></div></div>
+<div class="full-controls"><button class="ctrl-btn" onclick="prevTrack()"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button><button class="main-play" onclick="togglePlay()"><svg id="fullPlayIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><svg id="fullPauseIcon" viewBox="0 0 24 24" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></button><button class="ctrl-btn" onclick="nextTrack()"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button></div>
+<div class="full-extra"><button id="shuffleBtn" onclick="toggleShuffle()"><svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5z"/></svg></button><button id="repeatBtn" onclick="toggleRepeat()"><svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg></button><button id="speedBtn" onclick="toggleSpeed()"><span class="speed-label" id="speedLabel">1x</span></button><button id="downloadBtn" onclick="downloadCurrent()"><svg viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg></button><button id="sleepBtn" onclick="window.openSleepPopup()" title="Sleep Timer"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg></button></div>
+<div class="similar-title">Similar Songs</div>
+<div class="similar-grid" id="similarGrid"></div>
+</div>
+</div>
+<div class="bottom-nav" id="bottomNav"><div class="nav-item active" onclick="switchTab('home',this)"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home</div><div class="nav-item" onclick="switchTab('search',this)"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5z"/></svg>Search</div><div class="nav-item" onclick="switchTab('library',this)"><svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/></svg>Library</div><div class="nav-item" onclick="switchTab('profile',this)"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Profile</div></div>
+<div class="soon-modal" id="soonModal"><div class="soon-card"><div class="icon" id="soonIcon">🚀</div><h3 id="soonTitle">Coming Soon</h3><p id="soonText">This feature is under development.</p><div class="btn-row"><button class="btn-cancel" onclick="closeSoon()">Close</button><button class="btn-contact" onclick="contactFromSoon()">Notify Me</button></div></div></div>
+<div id="bttBtn" onpointerdown="window.startHold&&window.startHold(event)" onpointerup="window.stopHold&&window.stopHold()" onpointerleave="window.stopHold&&window.stopHold()" onpointercancel="window.stopHold&&window.stopHold()" onselectstart="return false" ondragstart="return false">↑</div>
+<audio id="audioPlayer"></audio>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script data-goatcounter="https://bimusic.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<button id="fsOverlayBtn" title="Toggle Fullscreen">⛶</button>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script src="script.js"></script>
+</body></html>
