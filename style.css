@@ -1906,3 +1906,19 @@ body { background: #050505 !important; }
   left: 8px !important;
   right: 8px !important;
 }
+
+/* put mini-player right above the bottom nav */
+#miniPlayer {
+  bottom: 80px !important;
+  left: 10px !important;
+  right: 10px !important;
+  z-index: 200 !important;
+}
+
+/* put mini-player right above the bottom nav */
+#miniPlayer {
+  bottom: 80px !important;
+  left: 10px !important;
+  right: 10px !important;
+  z-index: 200 !important;
+}
