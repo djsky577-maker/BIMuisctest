@@ -38,8 +38,8 @@ function toggleAuthMode(){isLoginMode=!isLoginMode;document.getElementById('auth
 async function handleAuth(){var e=document.getElementById('authError');e.textContent='';if(!db){e.textContent='Loading';return;}var em=document.getElementById('authEmail').value.trim(),pw=document.getElementById('authPassword').value,b=document.getElementById('authBtn');if(!em||!pw){e.textContent='Fill both fields.';return;}if(pw.length<6){e.textContent='Password 6+ characters.';return;}b.disabled=true;b.textContent=isLoginMode?'Logging in...':'Creating...';try{var r=isLoginMode?await db.auth.signInWithPassword({email:em,password:pw}):await db.auth.signUp({email:em,password:pw});if(r.error){e.textContent=r.error.message;b.disabled=false;b.textContent=isLoginMode?'Log In':'Register';return;}if(!r.data.session){e.textContent='Check email to confirm.';b.disabled=false;b.textContent=isLoginMode?'Log In':'Register';return;}currentUser=r.data.user;b.disabled=false;b.textContent=isLoginMode?'Log In':'Register';enterApp();}catch(x){e.textContent='Error: '+x.message;b.disabled=false;b.textContent=isLoginMode?'Log In':'Register';}}
 async function logout(){if(db)await db.auth.signOut();currentUser=null;showView('auth');document.getElementById('authPassword').value='';}
 function enterApp(){document.getElementById('profileEmail').textContent=currentUser.email||'';switchTab('home',document.querySelectorAll('.nav-item')[0]);}
-function showView(name){document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});var t=document.getElementById('view-'+name);if(t)t.classList.add('active');var isAuth=(name==='auth');document.getElementById('mainHeader').style.display=isAuth?'none':'flex';document.getElementById('mainSearchRow').style.display=(name==='home')?'flex':'none';document.getElementById('mainNavTabs').style.display=(name==='home')?'flex':'none';document.getElementById('bottomNav').classList.toggle('active',!isAuth);}
-function switchTab(tab,el){document.querySelectorAll('.nav-item').forEach(function(t){t.classList.remove('active');});if(el)el.classList.add('active');if(tab==='home'){showView('home');loadHomeData();}else if(tab==='search')showView('search');else if(tab==='library'){showView('library');loadMyUploads();}else if(tab==='profile')showView('profile');else if(tab==='shorts')showView('shorts');}
+function showView(name){document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});var t=document.getElementById('view-'+name);if(t)t.classList.add('active');var isAuth=(name==='auth');var isShorts=(name==='shorts');document.getElementById('mainHeader').style.display=(isAuth||isShorts)?'none':'flex';document.getElementById('mainSearchRow').style.display=(name==='home')?'flex':'none';document.getElementById('mainNavTabs').style.display=(name==='home')?'flex':'none';document.getElementById('bottomNav').classList.toggle('active',!isAuth);}
+function switchTab(tab,el){document.querySelectorAll('.nav-item').forEach(function(t){t.classList.remove('active');});if(el)el.classList.add('active');if(tab==='home'){showView('home');loadHomeData();}else if(tab==='search')showView('search');else if(tab==='library'){showView('library');loadMyUploads();}else if(tab==='profile')showView('profile');else if(tab==='shorts'){showView('shorts');if(shortsPool.length===0)loadShorts();}}
 function switchHomeTab(tab,el){document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});if(el)el.classList.add('active');document.querySelectorAll('.home-tab').forEach(function(t){t.style.display='none';});var t=document.getElementById('tab-'+tab);if(t)t.style.display='block';if(tab==='trending'){refreshTrending();}if(tab==='mixtape'&&mixPool.length===0){for(var i=0;i<3;i++)loadMixtapes();}if(tab==='artists'&&artistPool.length===0){for(var j=0;j<3;j++)loadArtistsNext();}if(tab==='genres')document.getElementById('genreResults').innerHTML='';}
 function shareApp(){var url=window.location.href;if(navigator.share){navigator.share({title:'B.I Music 🎵',text:'Listen to music for free on B.I Music!',url:url}).catch(function(){});}else{navigator.clipboard.writeText(url).then(function(){alert('Link copied!');}).catch(function(){prompt('Copy:',url);});}}
 function contactUs(){window.open('https://wa.me/256707103377?text='+encodeURIComponent('Hi! I am using B.I Music and I need help.'),'_blank');}
@@ -3479,4 +3479,80 @@ function buildArtistRow(list){
     html += '<div class="artist-box marquee-item" onclick="openArtistProfile(\'' + a.name.replace(/'/g, "\\'") + '\', \'' + img + '\')"><div class="artist-img"><img src="' + img + '"></div><div class="artist-name">' + a.name + '</div></div>';
   });
   return html;
+}
+
+/* ===== SHORTS FEED ===== */
+var shortsPool = [];
+var shortsIdx = 0;
+var shortsLoading = false;
+var shortsQueries = [
+  'top songs 2026', 'trending songs 2026', 'afrobeats 2026',
+  'hip hop 2026', 'rnb 2026', 'amapiano 2026',
+  'pop hits 2026', 'dancehall 2026', 'top hits this week',
+  'official audio 2026', 'latest songs 2026', 'viral songs 2026'
+];
+
+async function loadShorts(){
+  if(shortsLoading) return;
+  shortsLoading = true;
+  var feed = document.getElementById('shortsFeed');
+  if(!feed){ shortsLoading = false; return; }
+
+  // Remove loading spinner on first load
+  if(shortsPool.length === 0){
+    feed.innerHTML = '';
+  }
+
+  var added = 0;
+  var tries = 0;
+  while(added < 10 && tries < 8){
+    if(shortsIdx >= shortsQueries.length){ shortsIdx = 0; }
+    var q = shortsQueries[shortsIdx];
+    shortsIdx++;
+    tries++;
+    try {
+      var d = await pget('/search?q=' + encodeURIComponent(q) + '&filter=videos');
+      var items = (d.items || []).filter(function(v){
+        return v.url && v.title && isRealSong && isRealSong(v.title);
+      });
+      items.forEach(function(v){
+        if(added >= 10) return;
+        var vid = (v.url || '').replace('/watch?v=', '');
+        if(shortsPool.some(function(x){ return x.id === vid; })) return;
+        // Prefer Topic channels / audio for fewer ads
+        var uploader = (v.uploaderName || '').toLowerCase();
+        var title = (v.title || '').toLowerCase();
+        var isTopic = uploader.indexOf('- topic') >= 0 || uploader.indexOf('topic') >= 0;
+        var isAudio = title.indexOf('audio') >= 0 || title.indexOf('lyric') >= 0;
+        var obj = { id: vid, title: v.title, artist: v.uploaderName, thumbnail: v.thumbnail };
+        shortsPool.push(obj);
+        added++;
+        renderShortCard(obj, shortsPool.length - 1);
+      });
+    } catch(e){}
+  }
+  shortsLoading = false;
+}
+
+function renderShortCard(song, index){
+  var feed = document.getElementById('shortsFeed');
+  if(!feed) return;
+  var card = document.createElement('div');
+  card.className = 'short-card';
+  card.dataset.index = index;
+  card.dataset.videoid = song.id;
+  card.innerHTML =
+    '<div class="short-video-wrap" id="shortVid-' + index + '"></div>' +
+    '<div class="short-overlay">' +
+      '<div class="short-info">' +
+        '<div class="short-title">' + song.title + '</div>' +
+        '<div class="short-artist">' + song.artist + '</div>' +
+      '</div>' +
+      '<div class="short-side">' +
+        '<div class="short-side-btn" onclick="event.stopPropagation();">' +
+          '<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  feed.appendChild(card);
 }
