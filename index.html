@@ -128,7 +128,14 @@
 <div class="section"><div class="section-header"><h3>You Might Like</h3></div><div class="scroll-x" id="youMightLike"></div></div>
 </div>
 <div class="home-tab" id="tab-trending" style="display:none"><div class="section-header"><h3>🔥 Trending Songs</h3></div><div id="trendingList"></div><div class="load-more-wrap" id="trendingLoadBtn" style="display:none"><button onclick="loadTrending()">Load More</button></div><div class="section-header" style="margin-top:22px"><h3>✨ New Releases</h3></div><div id="hotList"></div><div class="load-more-wrap" id="hotLoadBtn" style="display:none"><button onclick="loadHot()">Load More</button></div></div>
-<div class="home-tab" id="tab-shorts" style="display:none"><div class="section-header"><h3>🎬 Shorts</h3></div><p style="color:#666;text-align:center;padding:40px">Shorts feed coming soon...</p></div>
+<div class="view" id="view-shorts">
+  <div class="shorts-feed" id="shortsFeed">
+    <div class="shorts-loading">
+      <div class="shorts-spinner"></div>
+      <p>Loading Shorts...</p>
+    </div>
+  </div>
+</div>
 <div class="home-tab" id="tab-mixtape" style="display:none"><div class="section-header"><h3>🎧 Mixtapes & Nonstop</h3></div><div id="mixtapeList"></div><div class="load-more-wrap" id="mixLoadBtn" style="display:none"><button onclick="loadMixtapes()">Load More</button></div></div>
 <div class="home-tab" id="tab-artists" style="display:none"><div class="search-row" style="padding:0 0 14px 0"><input id="artistSearchInput" placeholder="Search artist..."><button onclick="searchArtist()">Go</button></div><div class="artist-grid" id="artistsList"></div><div class="load-more-wrap" id="artistLoadBtn" style="display:none"><button onclick="loadArtistsNext()">Load More</button></div></div>
 <div class="home-tab" id="tab-genres" style="display:none"><div class="genre-grid"><div class="genre-card" style="background:linear-gradient(135deg,#ff416c,#ff4b2b)" onclick="searchGenre('Afrobeat')"><span>Afrobeat</span></div><div class="genre-card" style="background:linear-gradient(135deg,#1e9600,#fff200)" onclick="searchGenre('Hip Hop')"><span>Hip Hop</span></div><div class="genre-card" style="background:linear-gradient(135deg,#00b4db,#0083b0)" onclick="searchGenre('Chill')"><span>Chill</span></div><div class="genre-card" style="background:linear-gradient(135deg,#7b4397,#dc2430)" onclick="searchGenre('Dancehall')"><span>Dancehall</span></div><div class="genre-card" style="background:linear-gradient(135deg,#f12711,#f5af19)" onclick="searchGenre('Gospel')"><span>Gospel</span></div><div class="genre-card" style="background:linear-gradient(135deg,#11998e,#38ef7d)" onclick="searchGenre('Amapiano')"><span>Amapiano</span></div></div><div id="genreResults" style="margin-top:16px"></div></div>
