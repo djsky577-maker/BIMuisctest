@@ -3585,3 +3585,17 @@ setTimeout(function(){
     'isRealSong: ' + (typeof isRealSong) +
     '</div>';
 }, 4000);
+
+async function loadShorts(){
+  var feed = document.getElementById('shortsFeed');
+  if(!feed) return;
+  feed.innerHTML = '<div style="color:#00e0d0;text-align:center;padding:60px 20px;font-size:14px">Step 1: starting...</div>';
+  
+  try {
+    var d = await pget('/search?q=' + encodeURIComponent('top songs 2026') + '&filter=videos');
+    feed.innerHTML = '<div style="color:#00e0d0;text-align:center;padding:60px 20px;font-size:14px">Step 2: got ' + (d.items ? d.items.length : 0) + ' items</div>';
+  } catch(e) {
+    feed.innerHTML = '<div style="color:#ff5555;text-align:center;padding:60px 20px;font-size:14px">ERROR: ' + e.message + '</div>';
+    return;
+  }
+}
