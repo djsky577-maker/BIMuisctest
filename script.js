@@ -538,11 +538,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('service-worker.js');
-  });
-}
 
 
 document.addEventListener('DOMContentLoaded', function() {
