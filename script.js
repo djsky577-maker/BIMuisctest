@@ -3556,3 +3556,17 @@ function renderShortCard(song, index){
     '</div>';
   feed.appendChild(card);
 }
+
+/* DEBUG: check if Shorts loads */
+setTimeout(function(){
+  var feed = document.getElementById('shortsFeed');
+  if(feed && feed.innerHTML.indexOf('short-card') === -1){
+    feed.innerHTML = '<div style="color:#ff5555;text-align:center;padding:40px;font-size:14px">' +
+      'Shorts pool: ' + (typeof shortsPool !== 'undefined' ? shortsPool.length : 'undefined') + '<br>' +
+      'Loading: ' + (typeof shortsLoading !== 'undefined' ? shortsLoading : 'undefined') + '<br>' +
+      'Feed element: ' + (feed ? 'found' : 'MISSING') + '<br>' +
+      'pget: ' + (typeof pget) + '<br>' +
+      'isRealSong: ' + (typeof isRealSong) +
+      '</div>';
+  }
+}, 3000);
