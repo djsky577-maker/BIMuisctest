@@ -1,5 +1,7 @@
+var shortsPool = [];
 
 var PIPES=['https://pipedapi.kavin.rocks','https://pipedapi.adminforge.de','https://api.piped.private.coffee','https://pipedapi.reallyaweso.me'];
+var shortsPool = [];
 var pipeIdx=0;
 async function pget(path){for(var i=0;i<PIPES.length;i++){var idx=(pipeIdx+i)%PIPES.length;try{var r=await fetch(PIPES[idx]+path);if(!r.ok)throw 0;var d=await r.json();pipeIdx=idx;return d;}catch(e){}}throw new Error('busy');}
 var SUPABASE_URL='https://fugfrgyosrugsrardytk.supabase.co';
@@ -3603,7 +3605,7 @@ async function loadShorts(){
 async function loadShorts(){
   var feed = document.getElementById('shortsFeed');
   if(!feed) return;
-  if(shortsPool && shortsPool.length > 0) return;
+  
 
   feed.innerHTML = '<div style="color:#00e0d0;text-align:center;padding:60px 20px;font-size:14px">Loading...</div>';
 
