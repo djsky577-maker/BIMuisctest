@@ -2062,10 +2062,10 @@ body { background: #050505 !important; }
   will-change: transform;
 }
 .row-left .marquee-track {
-  animation: scrollLeft 40s linear infinite;
+  animation: scrollLeft 90s linear infinite;
 }
 .row-right .marquee-track {
-  animation: scrollRight 40s linear infinite;
+  animation: scrollRight 90s linear infinite;
 }
 @keyframes scrollLeft {
   from { transform: translateX(0); }
