@@ -3492,7 +3492,7 @@ var shortsQueries = [
   'official audio 2026', 'latest songs 2026', 'viral songs 2026'
 ];
 
-async function loadShorts(){
+async function loadShorts(){alert("loadShorts called");
   if(shortsLoading) return;
   shortsLoading = true;
   var feed = document.getElementById('shortsFeed');
