@@ -3599,3 +3599,58 @@ async function loadShorts(){
     return;
   }
 }
+
+async function loadShorts(){
+  var feed = document.getElementById('shortsFeed');
+  if(!feed) return;
+  if(shortsPool && shortsPool.length > 0) return;
+
+  feed.innerHTML = '<div style="color:#00e0d0;text-align:center;padding:60px 20px;font-size:14px">Loading...</div>';
+
+  var queries = ['top songs 2026','afrobeats 2026','hip hop 2026','rnb 2026','pop hits 2026'];
+  var added = 0;
+
+  for (var q of queries) {
+    if (added >= 8) break;
+    try {
+      var d = await pget('/search?q=' + encodeURIComponent(q) + '&filter=videos');
+      var items = (d.items || []).filter(function(v){
+        return v.url && v.title;
+      });
+      for (var v of items) {
+        if (added >= 8) break;
+        var vid = (v.url || '').replace('/watch?v=', '');
+        if (!vid) continue;
+        if (shortsPool.some(function(x){ return x.id === vid; })) continue;
+        shortsPool.push({ id: vid, title: v.title, artist: v.uploaderName, thumbnail: v.thumbnail });
+        added++;
+      }
+    } catch(e) {}
+  }
+
+  if (shortsPool.length === 0) {
+    feed.innerHTML = '<div style="color:#ff5555;text-align:center;padding:60px 20px;font-size:14px">Could not load songs. Check your connection.</div>';
+    return;
+  }
+
+  feed.innerHTML = '';
+  shortsPool.forEach(function(song, i){
+    var card = document.createElement('div');
+    card.className = 'short-card';
+    card.dataset.index = i;
+    var ytUrl = 'https://www.youtube.com/embed/' + song.id +
+      '?autoplay=0&controls=0&modestbranding=1&showinfo=0&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3';
+    card.innerHTML =
+      '<div class="short-video-wrap"><iframe src="' + ytUrl + '" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>' +
+      '<div class="short-overlay">' +
+        '<div class="short-info">' +
+          '<div class="short-title">' + song.title + '</div>' +
+          '<div class="short-artist">' + song.artist + '</div>' +
+        '</div>' +
+        '<div class="short-side">' +
+          '<div class="short-side-btn" onclick="event.stopPropagation();this.classList.toggle(\'liked\')"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>' +
+        '</div>' +
+      '</div>';
+    feed.appendChild(card);
+  });
+}
