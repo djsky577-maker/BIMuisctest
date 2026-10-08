@@ -129,20 +129,11 @@
 </div>
 <div class="home-tab" id="tab-trending" style="display:none"><div class="section-header"><h3>🔥 Trending Songs</h3></div><div id="trendingList"></div><div class="load-more-wrap" id="trendingLoadBtn" style="display:none"><button onclick="loadTrending()">Load More</button></div><div class="section-header" style="margin-top:22px"><h3>✨ New Releases</h3></div><div id="hotList"></div><div class="load-more-wrap" id="hotLoadBtn" style="display:none"><button onclick="loadHot()">Load More</button></div></div>
 <div class="view" id="view-shorts">
-  <div class="shorts-coming">
-    <div class="shorts-coming-glow"></div>
-    <div class="shorts-coming-icon">
-      <svg viewBox="0 0 24 24">
-        <path d="M10 8v8l6-4-6-4zm9-5H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
-      </svg>
+  <div class="shorts-feed" id="shortsFeed">
+    <div class="shorts-loading">
+      <div class="shorts-spinner"></div>
+      <p>Loading Shorts...</p>
     </div>
-    <h1 class="shorts-coming-title">SHORTS</h1>
-    <div class="shorts-coming-badge">COMING SOON</div>
-    <p class="shorts-coming-sub">A new way to discover music.<br>Scroll. Play. Repeat. 🎬</p>
-    <div class="shorts-coming-line"></div>
-    <p class="shorts-coming-note">Stay tuned — this is going to be special.</p>
-  </div>
-</div>
   </div>
 </div>
 <div class="home-tab" id="tab-mixtape" style="display:none"><div class="section-header"><h3>🎧 Mixtapes & Nonstop</h3></div><div id="mixtapeList"></div><div class="load-more-wrap" id="mixLoadBtn" style="display:none"><button onclick="loadMixtapes()">Load More</button></div></div>

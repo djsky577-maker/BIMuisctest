@@ -1,7 +1,5 @@
-var shortsPool = [];
 
 var PIPES=['https://pipedapi.kavin.rocks','https://pipedapi.adminforge.de','https://api.piped.private.coffee','https://pipedapi.reallyaweso.me'];
-var shortsPool = [];
 var pipeIdx=0;
 async function pget(path){for(var i=0;i<PIPES.length;i++){var idx=(pipeIdx+i)%PIPES.length;try{var r=await fetch(PIPES[idx]+path);if(!r.ok)throw 0;var d=await r.json();pipeIdx=idx;return d;}catch(e){}}throw new Error('busy');}
 var SUPABASE_URL='https://fugfrgyosrugsrardytk.supabase.co';
@@ -40,8 +38,8 @@ function toggleAuthMode(){isLoginMode=!isLoginMode;document.getElementById('auth
 async function handleAuth(){var e=document.getElementById('authError');e.textContent='';if(!db){e.textContent='Loading';return;}var em=document.getElementById('authEmail').value.trim(),pw=document.getElementById('authPassword').value,b=document.getElementById('authBtn');if(!em||!pw){e.textContent='Fill both fields.';return;}if(pw.length<6){e.textContent='Password 6+ characters.';return;}b.disabled=true;b.textContent=isLoginMode?'Logging in...':'Creating...';try{var r=isLoginMode?await db.auth.signInWithPassword({email:em,password:pw}):await db.auth.signUp({email:em,password:pw});if(r.error){e.textContent=r.error.message;b.disabled=false;b.textContent=isLoginMode?'Log In':'Register';return;}if(!r.data.session){e.textContent='Check email to confirm.';b.disabled=false;b.textContent=isLoginMode?'Log In':'Register';return;}currentUser=r.data.user;b.disabled=false;b.textContent=isLoginMode?'Log In':'Register';enterApp();}catch(x){e.textContent='Error: '+x.message;b.disabled=false;b.textContent=isLoginMode?'Log In':'Register';}}
 async function logout(){if(db)await db.auth.signOut();currentUser=null;showView('auth');document.getElementById('authPassword').value='';}
 function enterApp(){document.getElementById('profileEmail').textContent=currentUser.email||'';switchTab('home',document.querySelectorAll('.nav-item')[0]);}
-function showView(name){document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});var t=document.getElementById('view-'+name);if(t)t.classList.add('active');var isAuth=(name==='auth');var isShorts=(name==='shorts');document.getElementById('mainHeader').style.display=(isAuth||isShorts)?'none':'flex';document.getElementById('mainSearchRow').style.display=(name==='home')?'flex':'none';document.getElementById('mainNavTabs').style.display=(name==='home')?'flex':'none';document.getElementById('bottomNav').classList.toggle('active',!isAuth);}
-function switchTab(tab,el){document.querySelectorAll('.nav-item').forEach(function(t){t.classList.remove('active');});if(el)el.classList.add('active');if(tab==='home'){showView('home');loadHomeData();}else if(tab==='search')showView('search');else if(tab==='library'){showView('library');loadMyUploads();}else if(tab==='profile')showView('profile');else if(tab==='shorts'){showView('shorts');if(shortsPool.length===0)loadShorts();}}
+function showView(name){document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});var t=document.getElementById('view-'+name);if(t)t.classList.add('active');var isAuth=(name==='auth');document.getElementById('mainHeader').style.display=isAuth?'none':'flex';document.getElementById('mainSearchRow').style.display=(name==='home')?'flex':'none';document.getElementById('mainNavTabs').style.display=(name==='home')?'flex':'none';document.getElementById('bottomNav').classList.toggle('active',!isAuth);}
+function switchTab(tab,el){document.querySelectorAll('.nav-item').forEach(function(t){t.classList.remove('active');});if(el)el.classList.add('active');if(tab==='home'){showView('home');loadHomeData();}else if(tab==='search')showView('search');else if(tab==='library'){showView('library');loadMyUploads();}else if(tab==='profile')showView('profile');}
 function switchHomeTab(tab,el){document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});if(el)el.classList.add('active');document.querySelectorAll('.home-tab').forEach(function(t){t.style.display='none';});var t=document.getElementById('tab-'+tab);if(t)t.style.display='block';if(tab==='trending'){refreshTrending();}if(tab==='mixtape'&&mixPool.length===0){for(var i=0;i<3;i++)loadMixtapes();}if(tab==='artists'&&artistPool.length===0){for(var j=0;j<3;j++)loadArtistsNext();}if(tab==='genres')document.getElementById('genreResults').innerHTML='';}
 function shareApp(){var url=window.location.href;if(navigator.share){navigator.share({title:'B.I Music 🎵',text:'Listen to music for free on B.I Music!',url:url}).catch(function(){});}else{navigator.clipboard.writeText(url).then(function(){alert('Link copied!');}).catch(function(){prompt('Copy:',url);});}}
 function contactUs(){window.open('https://wa.me/256707103377?text='+encodeURIComponent('Hi! I am using B.I Music and I need help.'),'_blank');}
@@ -63,7 +61,7 @@ function loadArtistGrid(targetId,names){var c=document.getElementById(targetId);
 async function loadThumb(name,imgId){try{var d=await pget('/search?q='+encodeURIComponent(name)+'&filter=channels');var channels=(d.items||[]).slice(0,5);var img=document.querySelector('#'+imgId+' img');if(!img)return;var nm=name.toLowerCase().trim();for(var i=0;i<channels.length;i++){var cn=(channels[i].name||'').toLowerCase().replace(/\s*-\s*topic$/,'').replace(/vevo$/,'').trim();if(cn===nm||cn.indexOf(nm)===0||nm.indexOf(cn)===0){if(channels[i].thumbnail){img.src=channels[i].thumbnail;return;}}}var d2=await pget('/search?q='+encodeURIComponent(name+' official video')+'&filter=videos');var vids=(d2.items||[]).slice(0,5);for(var j=0;j<vids.length;j++){var un=(vids[j].uploaderName||'').toLowerCase().replace(/\s*-\s*topic$/,'').replace(/vevo$/,'').trim();if(un.indexOf(nm)>=0||nm.indexOf(un)>=0){img.src=vids[j].thumbnail;return;}}}catch(e){}}
 function fetchSimilars(name){return new Promise(function(resolve){var key=name.toLowerCase().trim().replace(/[^a-z0-9 ]/g,'');var picks=CURATED_SIMILAR[key];var gen=['Burna Boy','Wizkid','Drake','Rema'];var genOut=function(){return gen.map(function(n){return{name:n,img:'https://ui-avatars.com/api/?name='+encodeURIComponent(n)+'&background=00e0d0&color=000&size=200'};});};if(picks&&picks.length){resolve(picks.map(function(n){return{name:n,img:'https://ui-avatars.com/api/?name='+encodeURIComponent(n)+'&background=00e0d0&color=000&size=200'};}));return;}pget('/search?q='+encodeURIComponent(name+' similar artists')+'&filter=channels').then(function(d){var items=d.items||[];var fn=key.split(' ')[0];var other={};items.forEach(function(v){var un=cleanArtistName(v.name);if(!isRealArtistName(un))return;var ul=un.toLowerCase();if(ul.indexOf(fn)>=0)return;other[un]=v.thumbnail||('https://ui-avatars.com/api/?name='+encodeURIComponent(un)+'&background=00e0d0&color=000&size=200');});var out=Object.keys(other).slice(0,4).map(function(n){return{name:n,img:other[n]};});if(out.length>=3){resolve(out);return;}resolve(genOut());}).catch(function(){resolve(genOut());});});}
 async function toggleFollow(name,btn,imgId){var idx=followedArtists.findIndex(function(a){return a.name===name;});var img=imgId?document.querySelector('#'+imgId+' img'):null;if(idx>=0){followedArtists.splice(idx,1);if(btn){btn.classList.remove('following');btn.textContent='Follow';}localStorage.setItem('bi_followed',JSON.stringify(followedArtists));renderFollowedArtists();loadForYou();}else{followedArtists.push({name:name,img:img?img.src:''});if(btn){btn.classList.add('following');btn.textContent='Following';}localStorage.setItem('bi_followed',JSON.stringify(followedArtists));renderFollowedArtists();loadForYou();try{var sims=await fetchSimilars(name);var myPos=followedArtists.findIndex(function(a){return a.name===name;});if(myPos<0)myPos=followedArtists.length-1;var ins=0;for(var i=0;i<sims.length;i++){var s=sims[i];if(!followedArtists.some(function(x){return x.name.toLowerCase()===s.name.toLowerCase();})){followedArtists.splice(myPos+ins,0,s);ins++;}}localStorage.setItem('bi_followed',JSON.stringify(followedArtists));renderFollowedArtists();loadForYou();}catch(e){}}if(currentArtist.name===name)updateFollowButton();}
-function renderFollowedArtists_OLD(){var c=document.getElementById('followedArtists');if(!c)return;if(followedArtists.length===0){c.innerHTML='<p style="color:#666;font-size:.75rem;grid-column:1/-1">Follow artists to see them here.</p>';return;}c.innerHTML='';followedArtists.forEach(function(a){var el=document.createElement('div');el.className='artist-box';el.innerHTML='<div class="artist-img"><img src="'+(a.img||'https://ui-avatars.com/api/?name='+encodeURIComponent(a.name)+'&background=00e0d0&color=000&size=200')+'"></div><div class="artist-name">'+a.name+'</div><button class="follow-btn following" onclick="event.stopPropagation();toggleFollow(\''+a.name.replace(/'/g,"\\'")+'\',this,null)">Following</button>';el.querySelector('.artist-img').onclick=function(){openArtistProfile(a.name,a.img);};c.appendChild(el);});}
+function renderFollowedArtists(){var c=document.getElementById('followedArtists');if(!c)return;if(followedArtists.length===0){c.innerHTML='<p style="color:#666;font-size:.75rem;grid-column:1/-1">Follow artists to see them here.</p>';return;}c.innerHTML='';followedArtists.forEach(function(a){var el=document.createElement('div');el.className='artist-box';el.innerHTML='<div class="artist-img"><img src="'+(a.img||'https://ui-avatars.com/api/?name='+encodeURIComponent(a.name)+'&background=00e0d0&color=000&size=200')+'"></div><div class="artist-name">'+a.name+'</div><button class="follow-btn following" onclick="event.stopPropagation();toggleFollow(\''+a.name.replace(/'/g,"\\'")+'\',this,null)">Following</button>';el.querySelector('.artist-img').onclick=function(){openArtistProfile(a.name,a.img);};c.appendChild(el);});}
 async function loadForYou(){var sec=document.getElementById('forYouSection'),c=document.getElementById('forYou');if(!c)return;if(followedArtists.length===0){sec.style.display='none';return;}sec.style.display='block';c.innerHTML='<p style="color:#666;font-size:.75rem">Loading...</p>';var all=[];for(var i=0;i<Math.min(followedArtists.length,5);i++){try{var d=await pget('/search?q='+encodeURIComponent(followedArtists[i].name+' official video')+'&filter=videos');var items=(d.items||[]).filter(function(v){return isRealSong(v);}).slice(0,4);items.forEach(function(v){all.push({id:(v.url||'').replace('/watch?v=',''),title:v.title,uploaderName:v.uploaderName,thumbnail:v.thumbnail});});}catch(e){}}if(all.length===0){c.innerHTML='<p style="color:#666;font-size:.75rem">No songs found.</p>';return;}c.innerHTML='';all.forEach(function(t){var el=document.createElement('div');el.className='card';el.onclick=function(){playQueue=all.map(function(x){return{id:{videoId:x.id},snippet:{title:x.title,channelTitle:x.uploaderName,thumbnails:{default:{url:x.thumbnail},high:{url:x.thumbnail}}}};});ytResults=playQueue;var idx=all.indexOf(t);if(idx>=0)playYoutube(idx);};el.innerHTML='<div class="card-img"><img src="'+t.thumbnail+'"></div><div class="card-title">'+t.title+'</div><div class="card-sub">'+t.uploaderName+'</div>';c.appendChild(el);});}
 async function searchGenre(g){genrePool=[];genreQuery=g;genreIdx=0;genreLoading=false;document.getElementById('genreResults').innerHTML='<h3 style="margin-bottom:10px">'+g+' Hits</h3><div id="genreList"></div><div class="load-more-wrap"><button onclick="loadGenreMore()">Load More</button></div>';for(var i=0;i<4;i++)await loadGenreMore();}
 async function loadGenreMore(){if(genreLoading)return;if(genrePool.length>=1000)return;genreLoading=true;var c=document.getElementById('genreList');if(!c){genreLoading=false;return;}var base=genreQuery;var variants=[base+' hit songs',base+' official video',base+' 2025',base+' best songs',base+' top songs',base+' music video',base+' new song',base+' latest',base+' trending',base+' album',base+' single',base+' audio',base+' visualizer',base+' official audio',base+' chart',base+' ft',base+' remix',base+' live',base+' 2024',base+' 2023',base+' classic',base+' throwback','best of '+base,'top 10 '+base,base+' greatest',base+' essentials'];if(genreIdx>=variants.length){variants.sort(function(){return Math.random()-0.5;});genreIdx=0;}var added=0;var tries=0;while(added<15&&tries<12){if(genrePool.length>=1000)break;if(genreIdx>=variants.length){variants.sort(function(){return Math.random()-0.5;});genreIdx=0;}var q=variants[genreIdx];genreIdx++;tries++;try{var d=await pget('/search?q='+encodeURIComponent(q)+'&filter=videos');var items=(d.items||[]).filter(function(v){return v.url&&isRealSong(v);});items.forEach(function(v){if(genrePool.length>=1000)return;var vid=(v.url||'').replace('/watch?v=','');if(genrePool.some(function(x){return x.id===vid;}))return;var obj={id:vid,title:v.title,uploaderName:v.uploaderName,thumbnail:v.thumbnail};genrePool.push(obj);added++;var ix=genrePool.length-1;var el=document.createElement('div');el.className='list-item';el.onclick=function(){playQueue=genrePool.map(function(x){return{id:{videoId:x.id},snippet:{title:x.title,channelTitle:x.uploaderName,thumbnails:{default:{url:x.thumbnail},high:{url:x.thumbnail}}}};});ytResults=playQueue;playYoutube(ix);};el.innerHTML='<img src="'+obj.thumbnail+'"><div class="list-info"><div class="list-title">'+obj.title+'</div><div class="list-sub">'+obj.uploaderName+'</div></div><button class="dl-btn" onclick="event.stopPropagation();dlId(\''+vid+'\')"><svg viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg></button>';c.appendChild(el);});}catch(e){}}genreLoading=false;}
@@ -540,6 +538,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('service-worker.js');
+  });
+}
 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -3455,134 +3458,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 800);
 })();
 // END END SCREEN ARTIST POPULATE - V2
-
-/* ===== NEW MARQUEE VERSION of renderFollowedArtists ===== */
-function renderFollowedArtists(){
-  var top = document.getElementById("followedArtistsTop");
-  var bot = document.getElementById("followedArtistsBottom");
-  if(!top || !bot) return;
-  if(!followedArtists || followedArtists.length === 0){
-    top.innerHTML = '<p style="color:#666;font-size:.75rem">Follow artists to see them here.</p>';
-    bot.innerHTML = "";
-    return;
-  }
-  var rowA = [], rowB = [];
-  followedArtists.forEach(function(a, i){
-    if(i % 2 === 0) rowA.push(a); else rowB.push(a);
-  });
-  top.innerHTML = buildArtistRow(rowA) + buildArtistRow(rowA);
-  bot.innerHTML = buildArtistRow(rowB) + buildArtistRow(rowB);
-}
-
-function buildArtistRow(list){
-  var html = "";
-  list.forEach(function(a){
-    var img = a.img || ("https://ui-avatars.com/api/?name=" + encodeURIComponent(a.name) + "&background=00e0d0&color=000&size=200");
-    html += '<div class="artist-box marquee-item" onclick="openArtistProfile(\'' + a.name.replace(/'/g, "\\'") + '\', \'' + img + '\')"><div class="artist-img"><img src="' + img + '"></div><div class="artist-name">' + a.name + '</div></div>';
-  });
-  return html;
-}
-
-/* ===== SHORTS FEED ===== */
-var shortsPool = [];
-var shortsIdx = 0;
-var shortsLoading = false;
-var shortsQueries = [
-  'top songs 2026', 'trending songs 2026', 'afrobeats 2026',
-  'hip hop 2026', 'rnb 2026', 'amapiano 2026',
-  'pop hits 2026', 'dancehall 2026', 'top hits this week',
-  'official audio 2026', 'latest songs 2026', 'viral songs 2026'
-];
-
-async function loadShorts(){
-  if(shortsLoading) return;
-  shortsLoading = true;
-  var feed = document.getElementById('shortsFeed');
-  if(!feed){ shortsLoading = false; return; }
-
-  // Remove loading spinner on first load
-  if(shortsPool.length === 0){
-    feed.innerHTML = '';
-  }
-
-  var added = 0;
-  var tries = 0;
-  while(added < 10 && tries < 8){
-    if(shortsIdx >= shortsQueries.length){ shortsIdx = 0; }
-    var q = shortsQueries[shortsIdx];
-    shortsIdx++;
-    tries++;
-    try {
-      var d = await pget('/search?q=' + encodeURIComponent(q) + '&filter=videos');
-      var items = (d.items || []).filter(function(v){
-        return v.url && v.title && isRealSong && isRealSong(v.title);
-      });
-      items.forEach(function(v){
-        if(added >= 10) return;
-        var vid = (v.url || '').replace('/watch?v=', '');
-        if(shortsPool.some(function(x){ return x.id === vid; })) return;
-        // Prefer Topic channels / audio for fewer ads
-        var uploader = (v.uploaderName || '').toLowerCase();
-        var title = (v.title || '').toLowerCase();
-        var isTopic = uploader.indexOf('- topic') >= 0 || uploader.indexOf('topic') >= 0;
-        var isAudio = title.indexOf('audio') >= 0 || title.indexOf('lyric') >= 0;
-        var obj = { id: vid, title: v.title, artist: v.uploaderName, thumbnail: v.thumbnail };
-        shortsPool.push(obj);
-        added++;
-        renderShortCard(obj, shortsPool.length - 1);
-      });
-    } catch(e){}
-  }
-  shortsLoading = false;
-}
-
-function renderShortCard(song, index){
-  var feed = document.getElementById('shortsFeed');
-  if(!feed) return;
-  var card = document.createElement('div');
-  card.className = 'short-card';
-  card.dataset.index = index;
-  card.dataset.videoid = song.id;
-  card.innerHTML =
-    '<div class="short-video-wrap" id="shortVid-' + index + '"></div>' +
-    '<div class="short-overlay">' +
-      '<div class="short-info">' +
-        '<div class="short-title">' + song.title + '</div>' +
-        '<div class="short-artist">' + song.artist + '</div>' +
-      '</div>' +
-      '<div class="short-side">' +
-        '<div class="short-side-btn" onclick="event.stopPropagation();">' +
-          '<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  feed.appendChild(card);
-}
-
-/* DEBUG: check if Shorts loads */
-setTimeout(function(){
-  var feed = document.getElementById('shortsFeed');
-  if(feed && feed.innerHTML.indexOf('short-card') === -1){
-    feed.innerHTML = '<div style="color:#ff5555;text-align:center;padding:40px;font-size:14px">' +
-      'Shorts pool: ' + (typeof shortsPool !== 'undefined' ? shortsPool.length : 'undefined') + '<br>' +
-      'Loading: ' + (typeof shortsLoading !== 'undefined' ? shortsLoading : 'undefined') + '<br>' +
-      'Feed element: ' + (feed ? 'found' : 'MISSING') + '<br>' +
-      'pget: ' + (typeof pget) + '<br>' +
-      'isRealSong: ' + (typeof isRealSong) +
-      '</div>';
-  }
-}, 3000);
-
-// Show loading status visibly
-setTimeout(function(){
-  var feed = document.getElementById('shortsFeed');
-  if(!feed) return;
-  if(feed.innerHTML.indexOf('short-card') >= 0) return; // cards rendered, OK
-  feed.innerHTML = '<div style="color:#00e0d0;text-align:center;padding:60px 20px;font-size:14px;line-height:1.8">' +
-    '<strong>Shorts Debug</strong><br>' +
-    'Pool size: ' + (window.shortsPool ? shortsPool.length : 'no pool') + '<br>' +
-    'Loading: ' + (typeof shortsLoading !== 'undefined' ? shortsLoading : '?') + '<br>' +
-    'Feed found: ' + (feed ? 'yes' : 'no') + '<br>' +
-    'pget type: ' + (typeof pget) + '<br>' +
-    'isRealSong: ' + (typeof isRealSong) +
-    '</div>';
