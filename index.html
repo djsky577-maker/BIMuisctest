@@ -128,23 +128,6 @@
 <div class="section"><div class="section-header"><h3>You Might Like</h3></div><div class="scroll-x" id="youMightLike"></div></div>
 </div>
 <div class="home-tab" id="tab-trending" style="display:none"><div class="section-header"><h3>🔥 Trending Songs</h3></div><div id="trendingList"></div><div class="load-more-wrap" id="trendingLoadBtn" style="display:none"><button onclick="loadTrending()">Load More</button></div><div class="section-header" style="margin-top:22px"><h3>✨ New Releases</h3></div><div id="hotList"></div><div class="load-more-wrap" id="hotLoadBtn" style="display:none"><button onclick="loadHot()">Load More</button></div></div>
-<div class="view" id="view-shorts">
-  <div class="shorts-coming">
-    <div class="shorts-coming-glow"></div>
-    <div class="shorts-coming-icon">
-      <svg viewBox="0 0 24 24">
-        <path d="M10 8v8l6-4-6-4zm9-5H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
-      </svg>
-    </div>
-    <h1 class="shorts-coming-title">SHORTS</h1>
-    <div class="shorts-coming-badge">COMING SOON</div>
-    <p class="shorts-coming-sub">A new way to discover music.<br>Scroll. Play. Repeat. 🎬</p>
-    <div class="shorts-coming-line"></div>
-    <p class="shorts-coming-note">Stay tuned — this is going to be special.</p>
-  </div>
-</div>
-  </div>
-</div>
 <div class="home-tab" id="tab-mixtape" style="display:none"><div class="section-header"><h3>🎧 Mixtapes & Nonstop</h3></div><div id="mixtapeList"></div><div class="load-more-wrap" id="mixLoadBtn" style="display:none"><button onclick="loadMixtapes()">Load More</button></div></div>
 <div class="home-tab" id="tab-artists" style="display:none"><div class="search-row" style="padding:0 0 14px 0"><input id="artistSearchInput" placeholder="Search artist..."><button onclick="searchArtist()">Go</button></div><div class="artist-grid" id="artistsList"></div><div class="load-more-wrap" id="artistLoadBtn" style="display:none"><button onclick="loadArtistsNext()">Load More</button></div></div>
 <div class="home-tab" id="tab-genres" style="display:none"><div class="genre-grid"><div class="genre-card" style="background:linear-gradient(135deg,#ff416c,#ff4b2b)" onclick="searchGenre('Afrobeat')"><span>Afrobeat</span></div><div class="genre-card" style="background:linear-gradient(135deg,#1e9600,#fff200)" onclick="searchGenre('Hip Hop')"><span>Hip Hop</span></div><div class="genre-card" style="background:linear-gradient(135deg,#00b4db,#0083b0)" onclick="searchGenre('Chill')"><span>Chill</span></div><div class="genre-card" style="background:linear-gradient(135deg,#7b4397,#dc2430)" onclick="searchGenre('Dancehall')"><span>Dancehall</span></div><div class="genre-card" style="background:linear-gradient(135deg,#f12711,#f5af19)" onclick="searchGenre('Gospel')"><span>Gospel</span></div><div class="genre-card" style="background:linear-gradient(135deg,#11998e,#38ef7d)" onclick="searchGenre('Amapiano')"><span>Amapiano</span></div></div><div id="genreResults" style="margin-top:16px"></div></div>
@@ -190,7 +173,7 @@
 <div class="similar-grid" id="similarGrid"></div>
 </div>
 </div>
-<div class="bottom-nav" id="bottomNav"><div class="nav-item active" onclick="switchTab('home',this)"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home</div><div class="nav-item" onclick="switchTab('search',this)"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5z"/></svg>Search</div><div class="nav-item" onclick="switchTab('shorts',this)"><svg viewBox="0 0 24 24"><path d="M10 8v8l6-4-6-4zm9-5H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg>Shorts</div><div class="nav-item" onclick="switchTab('library',this)"><svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/></svg>Library</div><div class="nav-item" onclick="switchTab('profile',this)"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Profile</div></div>
+<div class="bottom-nav" id="bottomNav"><div class="nav-item active" onclick="switchTab('home',this)"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home</div><div class="nav-item" onclick="switchTab('search',this)"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5z"/></svg>Search</div><div class="nav-item" onclick="switchTab('library',this)"><svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/></svg>Library</div><div class="nav-item" onclick="switchTab('profile',this)"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Profile</div></div>
 <div class="soon-modal" id="soonModal"><div class="soon-card"><div class="icon" id="soonIcon">🚀</div><h3 id="soonTitle">Coming Soon</h3><p id="soonText">This feature is under development.</p><div class="btn-row"><button class="btn-cancel" onclick="closeSoon()">Close</button><button class="btn-contact" onclick="contactFromSoon()">Notify Me</button></div></div></div>
 <div id="bttBtn" onpointerdown="window.startHold&&window.startHold(event)" onpointerup="window.stopHold&&window.stopHold()" onpointerleave="window.stopHold&&window.stopHold()" onpointercancel="window.stopHold&&window.stopHold()" onselectstart="return false" ondragstart="return false">↑</div>
 <audio id="audioPlayer"></audio>
