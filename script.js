@@ -113,7 +113,7 @@ function onYouTubeIframeAPIReady(){
 try{
 ytPlayer=new YT.Player('youtube-player',{
 height:'100%',width:'100%',
-playerVars:{playsinline:1,controls:0,autoplay:1},
+playerVars:{playsinline:1,controls:0,autoplay:1,modestbranding:1,rel:0,showinfo:0,fs:0,iv_load_policy:3,disablekb:1,cc_load_policy:0},
 events:{
 onReady:function(){ytReady=true;},
 onStateChange:function(e){
@@ -3484,4 +3484,10 @@ function buildArtistRow(list){
     html += '<div class="artist-box marquee-item" onclick="openArtistProfile(\'' + a.name.replace(/'/g, "\\'") + '\', \'' + img + '\')"><div class="artist-img"><img src="' + img + '"></div><div class="artist-name">' + a.name + '</div></div>';
   });
   return html;
+}
+
+/* Tap-blocker: swallow taps so YouTube UI never appears */
+function toggleMyControls(){
+  // Do nothing for now — this just blocks YouTube from receiving the tap.
+  // We'll wire in your custom controls later.
 }
