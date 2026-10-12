@@ -3517,3 +3517,20 @@ function activateSkipZone(){
 function toggleMyControls(){
   // Called when the tap-blocker is tapped — does nothing, just blocks YouTube
 }
+
+/* ===== Skip Zone Logic (v2) ===== */
+var skipZoneTimer = null;
+
+function activateSkipZone(){
+  var skip = document.getElementById('skipZone');
+  if(!skip) return;
+  skip.classList.add('active');
+  if(skipZoneTimer){ clearTimeout(skipZoneTimer); skipZoneTimer = null; }
+  skipZoneTimer = setTimeout(function(){
+    skip.classList.remove('active');
+  }, 20000);
+}
+
+function toggleMyControls(){
+  // Blocker tapped — do nothing, just block YouTube
+}
