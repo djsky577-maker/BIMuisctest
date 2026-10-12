@@ -117,7 +117,7 @@ playerVars:{playsinline:1,controls:0,autoplay:1,modestbranding:1,rel:0,showinfo:
 events:{
 onReady:function(){ytReady=true;},
 onStateChange:function(e){
-if(e.data===1){isPlaying=true;updateAllIcons();}
+if(e.data===1){isPlaying=true;updateAllIcons();activateSkipZone();}
 else if(e.data===2){isPlaying=false;updateAllIcons();}
 else if(e.data===0){
 if(repeatMode===2){ytPlayer.seekTo(0);ytPlayer.playVideo();}
@@ -3490,4 +3490,30 @@ function buildArtistRow(list){
 function toggleMyControls(){
   // Do nothing for now — this just blocks YouTube from receiving the tap.
   // We'll wire in your custom controls later.
+}
+
+/* ===== Skip Zone Logic ===== */
+var skipZoneTimer = null;
+
+function activateSkipZone(){
+  var skip = document.getElementById('skipZone');
+  var blocker = document.getElementById('tapBlocker');
+  if(!skip || !blocker) return;
+
+  // Clear any old timer
+  if(skipZoneTimer){ clearTimeout(skipZoneTimer); skipZoneTimer = null; }
+
+  // For the first 20s: hide the main blocker, show the skip zone (right-bottom)
+  blocker.classList.remove('active');
+  skip.classList.add('active');
+
+  // After 20s: hide the skip zone, enable the full blocker
+  skipZoneTimer = setTimeout(function(){
+    skip.classList.remove('active');
+    blocker.classList.add('active');
+  }, 20000);
+}
+
+function toggleMyControls(){
+  // Called when the tap-blocker is tapped — does nothing, just blocks YouTube
 }
