@@ -1,7 +1,7 @@
 
 var PIPES=['https://pipedapi.kavin.rocks','https://pipedapi.adminforge.de','https://api.piped.private.coffee','https://pipedapi.reallyaweso.me'];
 var pipeIdx=0;
-async function pget(path){for(var i=0;i<PIPES.length;i++){var idx=(pipeIdx+i)%PIPES.length;try{var r=await fetch(PIPES[idx]+path);if(!r.ok)throw 0;var d=await r.json();pipeIdx=idx;return d;}catch(e){}}throw new Error('busy');}
+async function pget(path){for(var i=0;i<PIPES.length;i++){var idx=(pipeIdx+i)%PIPES.length;try{var r=await fetch(PIPES[idx]+path);if(!r.ok)throw 0;var d=await r.json();pipeIdx=idx;if(d&&d.items){d.items.forEach(function(it){if(it.thumbnail&&it.thumbnail.indexOf('http://')===0){it.thumbnail='https://'+it.thumbnail.slice(7);}if(it.uploaderAvatar&&it.uploaderAvatar.indexOf('http://')===0){it.uploaderAvatar='https://'+it.uploaderAvatar.slice(7);}});}return d;}catch(e){}}throw new Error('busy');}
 var SUPABASE_URL='https://fugfrgyosrugsrardytk.supabase.co';
 var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1Z2ZyZ3lvc3J1Z3NyYXJkeXRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4MDI2NzMsImV4cCI6MjEwNTM3ODY3M30.tNzCEJwV23z9dT75CUytYhirOuxF25GS1CffzpeghPY';
 var db=null,isLoginMode=true,currentUser=null,ytPlayer=null,ytReady=false;
