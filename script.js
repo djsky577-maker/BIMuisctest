@@ -3534,3 +3534,15 @@ function activateSkipZone(){
 function toggleMyControls(){
   // Blocker tapped — do nothing, just block YouTube
 }
+
+/* Global thumbnail fallback — catches ANY broken image */
+window.addEventListener('error', function(e){
+  var t = e.target;
+  if(t && t.tagName === 'IMG' && !t.dataset.thumbError){
+    t.dataset.thumbError = '1';
+    t.style.background = 'linear-gradient(135deg, #00e0d0, #008f85)';
+    t.style.objectFit = 'none';
+    // Fallback: use a music icon SVG as a data URI
+    t.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23000"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>';
+  }
+}, true);
