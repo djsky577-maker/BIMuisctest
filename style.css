@@ -2266,11 +2266,6 @@ body { background: #050505 !important; }
   display: block;
 }
 
-/* Thumbnail fallback — shown when image fails to load */
-img.thumb-fail,
-img[data-thumb-error="1"] {
-  background: linear-gradient(135deg, #00e0d0, #008f85) !important;
-  object-fit: none !important;
   color: #000 !important;
 }
 .card-img img,
