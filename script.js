@@ -1553,6 +1553,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
         console.log('[Lyrics] Current song:', title, '-', artist);
 
+        // ===== NEW: Try LRCLIB first =====
+        if (title) {
+            try {
+                body.innerHTML = '<div class="lyr-msg">Searching lyrics...</div>';
+                var lrcData = await fetchLRCLIBLyrics(title, artist || '');
+                if (lrcData) {
+                    if (lrcData.syncedLyrics && lrcData.syncedLyrics.length > 0) {
+                        var syncLines = parseLRC(lrcData.syncedLyrics);
+                        if (syncLines.length > 0) {
+                            renderLyricsSynced(body, syncLines);
+                            if (titleEl) titleEl.textContent = 'LYRICS · ' + title;
+                            return;
+                        }
+                    }
+                    if (lrcData.plainLyrics && lrcData.plainLyrics.length > 0) {
+                        renderLyricsText(body, lrcData.plainLyrics);
+                        if (titleEl) titleEl.textContent = 'LYRICS · ' + title;
+                        return;
+                    }
+                }
+            } catch(e) { console.log('[Lyrics] LRCLIB failed:', e); }
+        }
+        // ===== END LRCLIB =====
+
         if (!title) {
             body.innerHTML = '<div class="lyr-msg">Play a song first to find lyric videos 🎧</div>';
             return;
@@ -3541,4 +3565,158 @@ function toggleMyControls(){
 function ytThumb(vid, quality){
   if(!vid) return 'https://ui-avatars.com/api/?name=?&background=00e0d0&color=000&size=200';
   return 'https://i.ytimg.com/vi/' + vid + '/' + (quality || 'hqdefault') + '.jpg';
+}
+
+/* ===== LRCLIB Lyrics Fetcher ===== */
+async function fetchLRCLIBLyrics(title, artist){
+  if(!title) return null;
+  // Clean the title (remove "Official Video", "Lyrics", etc.)
+  var cleanTitle = title
+    .replace(/\(official\s*(music\s*)?video\)/gi, '')
+    .replace(/\(official\s*audio\)/gi, '')
+    .replace(/\(lyric\s*video\)/gi, '')
+    .replace(/\(lyrics?\)/gi, '')
+    .replace(/\(audio\)/gi, '')
+    .replace(/\[.*?\]/g, '')
+    .replace(/\s*-\s*topic$/i, '')
+    .replace(/\s*ft\.?\s+.*$/i, '')
+    .replace(/\s*feat\.?\s+.*$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // Extract the song part before " - " if there's a primary artist separator
+  var songPart = cleanTitle;
+  var artistPart = artist || '';
+  if(cleanTitle.indexOf(' - ') > 0){
+    var parts = cleanTitle.split(' - ');
+    if(parts.length >= 2){
+      artistPart = parts[0].trim();
+      songPart = parts.slice(1).join(' - ').trim();
+    }
+  }
+
+  // Try full search first (title + artist)
+  var queries = [
+    'https://lrclib.net/api/search?q=' + encodeURIComponent(songPart + ' ' + artistPart),
+    'https://lrclib.net/api/search?q=' + encodeURIComponent(songPart)
+  ];
+
+  for(var qi = 0; qi < queries.length; qi++){
+    try {
+      var r = await fetch(queries[qi]);
+      if(!r.ok) continue;
+      var data = await r.json();
+      if(!data || data.length === 0) continue;
+
+      // Prefer a result with synced lyrics
+      var best = null;
+      for(var i = 0; i < data.length; i++){
+        if(data[i].syncedLyrics && data[i].syncedLyrics.length > 0){
+          best = data[i];
+          break;
+        }
+      }
+      if(!best){
+        // Fall back to any result with plain lyrics
+        for(var j = 0; j < data.length; j++){
+          if(data[j].plainLyrics && data[j].plainLyrics.length > 0){
+            best = data[j];
+            break;
+          }
+        }
+      }
+      if(best) return best;
+    } catch(e){}
+  }
+  return null;
+}
+
+/* Parse LRC format into array of {time, text} */
+function parseLRC(lrc){
+  if(!lrc) return [];
+  var lines = lrc.split('\n');
+  var out = [];
+  var re = /\[(\d+):(\d+(?:\.\d+)?)\](.*)/;
+  lines.forEach(function(line){
+    var m = re.exec(line);
+    if(m){
+      var min = parseInt(m[1], 10);
+      var sec = parseFloat(m[2]);
+      var time = min * 60 + sec;
+      var text = m[3].trim();
+      if(text) out.push({ time: time, text: text });
+    }
+  });
+  out.sort(function(a,b){ return a.time - b.time; });
+  return out;
+}
+
+/* ===== Lyrics Overlay Rendering ===== */
+var lyricsSyncData = null;
+var lyricsSyncTimer = null;
+
+function renderLyricsText(container, plainText){
+  container.innerHTML = '';
+  var wrap = document.createElement('div');
+  wrap.className = 'lyr-text-wrap';
+  var lines = plainText.split('\n');
+  lines.forEach(function(line){
+    var p = document.createElement('div');
+    p.className = 'lyr-line';
+    p.textContent = line || ' ';
+    wrap.appendChild(p);
+  });
+  container.appendChild(wrap);
+}
+
+function renderLyricsSynced(container, syncLines){
+  container.innerHTML = '';
+  var wrap = document.createElement('div');
+  wrap.className = 'lyr-text-wrap';
+  syncLines.forEach(function(item, idx){
+    var p = document.createElement('div');
+    p.className = 'lyr-line';
+    p.dataset.time = item.time;
+    p.dataset.idx = idx;
+    p.textContent = item.text;
+    wrap.appendChild(p);
+  });
+  container.appendChild(wrap);
+  lyricsSyncData = syncLines;
+  startLyricsSync();
+}
+
+function startLyricsSync(){
+  stopLyricsSync();
+  lyricsSyncTimer = setInterval(function(){
+    if(!lyricsSyncData || !window.ytPlayer) return;
+    if(typeof window.ytPlayer.getCurrentTime !== 'function') return;
+    var t = window.ytPlayer.getCurrentTime();
+    if(!t && t !== 0) return;
+    var curIdx = -1;
+    for(var i = 0; i < lyricsSyncData.length; i++){
+      if(lyricsSyncData[i].time <= t) curIdx = i;
+      else break;
+    }
+    var wrap = document.querySelector('#lyricsBodyActive .lyr-text-wrap');
+    if(!wrap) return;
+    var lines = wrap.querySelectorAll('.lyr-line');
+    lines.forEach(function(el, i){
+      if(i === curIdx) el.classList.add('current');
+      else el.classList.remove('current');
+    });
+    if(curIdx >= 0 && lines[curIdx]){
+      var el = lines[curIdx];
+      var offset = el.offsetTop - wrap.clientHeight / 2 + el.clientHeight / 2;
+      document.getElementById('lyricsBodyActive').scrollTo({ top: offset, behavior: 'smooth' });
+    }
+  }, 500);
+}
+
+function stopLyricsSync(){
+  if(lyricsSyncTimer){
+    clearInterval(lyricsSyncTimer);
+    lyricsSyncTimer = null;
+  }
+  lyricsSyncData = null;
 }

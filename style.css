@@ -2275,3 +2275,27 @@ body { background: #050505 !important; }
 .pl-fav-img img {
   background: linear-gradient(135deg, #1a1a24, #0e0e14);
 }
+
+/* Lyrics text display */
+.lyr-text-wrap {
+  padding: 20px 24px 60px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lyr-line {
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.2s ease, transform 0.2s ease, font-weight 0.2s ease;
+  text-align: left;
+}
+.lyr-line.current {
+  color: #00e0d0;
+  font-weight: 700;
+  font-size: 18px;
+  text-shadow: 0 0 16px rgba(0, 224, 208, 0.5);
+}
+.lyr-line:empty {
+  height: 8px;
+}
