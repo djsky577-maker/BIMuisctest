@@ -3579,8 +3579,8 @@ function toggleMyControls(){
 
 /* Always build YouTube thumbnail URL directly from video ID (always HTTPS, always available) */
 function ytThumb(vid, quality){
-  if(!vid) return 'https://ui-avatars.com/api/?name=?&background=00e0d0&color=000&size=200';
-  return 'https://i.ytimg.com/vi/' + vid + '/' + (quality || 'hqdefault') + '.jpg';
+  if(!vid) return 'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%2300e0d0%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%230e0e14%22/%3E%3Cpath d=%22M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z%22/%3E%3C/svg%3E';
+  return 'https://i.ytimg.com/vi/' + vid + '/' + (quality || 'mqdefault') + '.jpg';
 }
 
 /* ===== LRCLIB Lyrics Fetcher ===== */
