@@ -117,7 +117,7 @@ playerVars:{playsinline:1,controls:0,autoplay:1,modestbranding:1,rel:0,showinfo:
 events:{
 onReady:function(){ytReady=true;},
 onStateChange:function(e){
-if(e.data===1){isPlaying=true;updateAllIcons();activateSkipZone();}
+if(e.data===1){isPlaying=true;updateAllIcons();}
 else if(e.data===2){isPlaying=false;updateAllIcons();}
 else if(e.data===0){
 if(repeatMode===2){ytPlayer.seekTo(0);ytPlayer.playVideo();}
