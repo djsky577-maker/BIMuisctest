@@ -1,0 +1,8 @@
+# B.I Music
+
+> B.I Music is a free music streaming web application for Afrobeats, Hip-Hop, R&B, and Amapiano.
+
+## Main Features
+- [Home](https://djsky577-maker.github.io/BIMusic2): Discover trending songs and artists.
+- [Search](https://djsky577-maker.github.io/BIMusic2/?tab=search): Find any song or artist.
+- [Library](https://djsky577-maker.github.io/BIMusic2/?tab=library): Your followed artists and favorites.

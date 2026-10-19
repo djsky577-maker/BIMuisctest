@@ -1,4 +1,16 @@
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
 User-agent: *
 Allow: /
 
-Sitemap: https://djsky577-maker.github.io/BIMusic/sitemap.xml
+Sitemap: https://djsky577-maker.github.io/BIMusic2/sitemap.xml
