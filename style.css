@@ -2700,3 +2700,26 @@ body { background: #050505 !important; }
 .short-top {
   padding-top: 55px !important; 
 }
+
+/* 1. Hide the back button and scroll button by default */
+#backBtnSmart { display: none !important; }
+#bttBtn { display: flex !important; } /* Keep scroll-to-top on home */
+
+/* 2. Show the back button ONLY when the Full Player is open */
+body:has(.full-player.active) #backBtnSmart,
+body:has(.artist-modal.active) #backBtnSmart {
+    display: flex !important;
+    z-index: 9999999 !important;
+}
+
+/* 3. Hide the scroll-to-top button when the player or artist modal is open */
+body:has(.full-player.active) #bttBtn,
+body:has(.artist-modal.active) #bttBtn,
+body:has(#view-shorts.active) #bttBtn {
+    display: none !important;
+}
+
+/* 4. Make sure the back button is hidden on the Shorts screen */
+body:has(#view-shorts.active) #backBtnSmart {
+    display: none !important;
+}
