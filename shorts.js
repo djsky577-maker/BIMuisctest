@@ -40,7 +40,7 @@ async function loadShortsFeed() {
         </div>
         <div class="short-overlay"></div>
         
-        <!-- TIKTOK STYLE UNMUTE BUTTON -->
+        <!-- Unmute button (fallback if browser blocks sound) -->
         <div class="unmute-btn" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:70px; height:70px; background:rgba(0,224,208,0.85); border-radius:50%; z-index:20; justify-content:center; align-items:center; cursor:pointer; box-shadow: 0 4px 20px rgba(0,224,208,0.5); animation: pulse 2s infinite;">
           <svg viewBox="0 0 24 24" style="width:35px; height:35px; fill:#000;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
         </div>
@@ -101,83 +101,51 @@ function setupShortObserver() {
                     return;
                 }
                 
-                loader.style.display = 'block';
+                loader.style.display = 'none';
                 
-                let resolved = false;
-                let timeout = setTimeout(() => {
-                    if (!resolved) {
-                        resolved = true;
-                        loader.style.display = 'none';
-                        createMutedIframe(wrap, vid, card, unmuteBtn);
-                    }
-                }, 3000);
+                // THE TRICK: Autoplay WITH sound, but block all clicks.
+                // Because we NEVER click the video, YouTube skips the ad!
+                const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=0&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
+                const iframe = document.createElement('iframe');
+                iframe.src = ytUrl;
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.style.border = 'none';
+                // THIS IS THE MAGIC: Block all touches so YouTube never gets clicked
+                iframe.style.pointerEvents = 'none';
+                
+                // Append iframe
+                wrap.appendChild(iframe);
+                
+                // Keep the poster image behind the iframe just in case the video is transparent
+                const poster = card.querySelector('.short-poster');
+                if(poster) poster.style.display = 'none';
 
-                window.pget('/streams/' + vid).then(res => {
-                    if (resolved) return;
-                    resolved = true;
-                    clearTimeout(timeout);
-                    loader.style.display = 'none';
-                    
-                    let streamUrl = '';
-                    if (res && res.audioStreams && res.audioStreams.length > 0) {
-                        streamUrl = res.audioStreams[0].url;
+                // If the browser blocks autoplay with sound, show the Tap button
+                setTimeout(() => {
+                    // Check if YouTube is playing, if not, show the unmute button
+                    if (unmuteBtn) {
+                        unmuteBtn.style.display = 'flex';
+                        unmuteBtn.onclick = function(e) {
+                            e.stopPropagation();
+                            try {
+                                iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'unMute', args: []}), '*');
+                                iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'setVolume', args: [100]}), '*');
+                            } catch(e){}
+                            unmuteBtn.style.display = 'none';
+                        };
                     }
-                    
-                    if (streamUrl) {
-                        const media = document.createElement('video');
-                        media.src = streamUrl;
-                        media.loop = true;
-                        media.playsInline = true;
-                        media.style.width = '100%';
-                        media.style.height = '100%';
-                        media.style.objectFit = 'cover';
-                        media.style.opacity = '0';
-                        wrap.appendChild(media);
-                        media.play().catch(e => console.log(e));
-                    } else {
-                        createMutedIframe(wrap, vid, card, unmuteBtn);
-                    }
-                }).catch(e => {
-                    if (resolved) return;
-                    resolved = true;
-                    clearTimeout(timeout);
-                    loader.style.display = 'none';
-                    createMutedIframe(wrap, vid, card, unmuteBtn);
-                });
+                }, 1500);
+                
             } else {
                 if (existingIframe) {
                     existingIframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
                 }
-                let media = wrap.querySelector('video');
-                if(media) media.pause();
             }
         });
     }, { threshold: 0.6 });
     
     cards.forEach(card => observer.observe(card));
-}
-
-function createMutedIframe(wrap, vid, card, unmuteBtn) {
-    const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
-    const iframe = document.createElement('iframe');
-    iframe.src = ytUrl;
-    iframe.style.width = '100%';
-    iframe.style.height = '100%';
-    iframe.style.border = 'none';
-    iframe.style.pointerEvents = 'auto';
-    wrap.appendChild(iframe);
-    
-    // Show the "Tap to Unmute" button
-    if(unmuteBtn) unmuteBtn.style.display = 'flex';
-
-    // Tap to unmute logic
-    card.addEventListener('click', function() {
-        try {
-            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'unMute', args: []}), '*');
-            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'setVolume', args: [100]}), '*');
-            if(unmuteBtn) unmuteBtn.style.display = 'none'; // Hide button after tapped
-        } catch(e) {}
-    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
