@@ -2386,3 +2386,52 @@ body { background: #050505 !important; }
 /* Tiny progress line at the very bottom */
 .short-progress { position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.2); z-index: 10; }
 .short-progress-fill { height: 100%; width: 30%; background: #fff; }
+
+/* ===== SHORTS UI OVERRIDES: FULL SCREEN & PROPER POSITIONS ===== */
+#view-shorts {
+  padding: 0 !important;
+  margin: 0 !important;
+  height: calc(100vh - 70px) !important;
+  overflow: hidden !important;
+  background: #000 !important;
+}
+
+.shorts-feed {
+  width: 100vw !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.short-card {
+  width: 100vw !important;
+  height: calc(100vh - 70px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.short-video-wrap img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* Push the top bar down so it doesn't hide under the phone's status bar */
+.short-top {
+  padding-top: 40px !important;
+}
+
+/* Move the right icons and left text up so they don't hide behind the audio bar */
+.short-right, .short-left {
+  bottom: 100px !important;
+}
+
+/* Keep the audio bar right above the bottom nav */
+.short-bottom {
+  bottom: 20px !important;
+}
+
+/* Fix the thin progress line */
+.short-progress {
+  bottom: 0 !important;
+}
