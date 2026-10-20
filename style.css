@@ -2782,3 +2782,9 @@ body:has(#view-shorts.active) .mini-player {
   position: absolute !important;
   top: 0 !important; left: 0 !important;
 }
+
+@keyframes pulse {
+  0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(0,224,208, 0.7); }
+  70% { transform: translate(-50%, -50%) scale(1.1); box-shadow: 0 0 0 15px rgba(0,224,208, 0); }
+  100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(0,224,208, 0); }
+}
