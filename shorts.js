@@ -1,21 +1,12 @@
-// ===== SHORTS FEED LOGIC =====
-let shortsLoaded = false;
-
-// 1. Hook directly into the app's tab switcher
-const originalSwitchTab = window.switchTab;
-window.switchTab = function(tab, el) {
-    if (originalSwitchTab) originalSwitchTab(tab, el);
-    if (tab === 'shorts') {
-        loadShortsFeed();
-    }
-};
+console.log("Shorts.js loaded!");
 
 async function loadShortsFeed() {
-  if (shortsLoaded) return;
   const feed = document.querySelector('.shorts-feed');
   if (!feed) return;
   
-  // Clear whatever is currently in the HTML (including the old Central Cee mockup)
+  // If it already has real cards, don't load again
+  if (feed.dataset.loaded === 'true') return;
+  
   feed.innerHTML = '<div style="color:#00e0d0;text-align:center;padding:50px;font-size:16px;">Loading trending music...</div>';
   
   try {
@@ -23,10 +14,11 @@ async function loadShortsFeed() {
     const q = queries[Math.floor(Math.random() * queries.length)];
     
     if (!window.pget) {
-        feed.innerHTML = '<div style="color:#ff5555;text-align:center;padding:50px;">API error.</div>';
+        feed.innerHTML = '<div style="color:#ff5555;text-align:center;padding:50px;">API error (pget missing).</div>';
         return;
     }
     
+    console.log("Fetching shorts with query:", q);
     const res = await window.pget('/search?q=' + encodeURIComponent(q) + '&filter=videos');
     
     if (!res || !res.items || res.items.length === 0) {
@@ -36,7 +28,6 @@ async function loadShortsFeed() {
 
     feed.innerHTML = '';
     
-    // Filter and shuffle
     const validVideos = res.items
       .filter(v => v.url && v.title)
       .sort(() => 0.5 - Math.random())
@@ -50,14 +41,12 @@ async function loadShortsFeed() {
       
       const card = document.createElement('div');
       card.className = 'short-card';
-      card.dataset.vid = vid;
       
-      // enablejsapi=1 allows us to play/pause without reloading
       const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=0&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
       
       card.innerHTML = `
         <div class="short-video-wrap">
-          <iframe id="yt-frame-${index}" src="${ytUrl}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+          <iframe src="${ytUrl}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
         </div>
         <div class="short-overlay"></div>
         
@@ -76,15 +65,11 @@ async function loadShortsFeed() {
             </div>
             <button class="short-follow-btn">Follow</button>
           </div>
-          <div class="short-tags">
-            <span>#music</span>
-            <span>#trending</span>
-          </div>
+          <div class="short-tags"><span>#music</span><span>#trending</span></div>
         </div>
 
         <div class="short-right">
           <div class="short-icon-btn"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg></div>
-          <div class="short-icon-btn"><svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></div>
         </div>
 
         <div class="short-bottom">
@@ -99,12 +84,25 @@ async function loadShortsFeed() {
         </div>
         <div class="short-progress"><div class="short-progress-fill"></div></div>
       `;
-      
       feed.appendChild(card);
     });
     
-    shortsLoaded = true;
-    setTimeout(setupShortObserver, 1500);
+    feed.dataset.loaded = 'true';
+    console.log("Shorts loaded successfully!");
+    
+    // Auto-play setup
+    setTimeout(() => {
+        const cards = document.querySelectorAll('.short-card');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const iframe = entry.target.querySelector('iframe');
+                if (!iframe || !iframe.contentWindow) return;
+                const cmd = entry.isIntersecting ? 'playVideo' : 'pauseVideo';
+                iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: cmd, args: []}), '*');
+            });
+        }, { threshold: 0.6 });
+        cards.forEach(card => observer.observe(card));
+    }, 1500);
     
   } catch (err) {
     console.error(err);
@@ -112,25 +110,21 @@ async function loadShortsFeed() {
   }
 }
 
-function setupShortObserver() {
-  const cards = document.querySelectorAll('.short-card');
-  
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      const card = entry.target;
-      const iframe = card.querySelector('iframe');
-      if (!iframe || !iframe.contentWindow) return;
-      
-      const playCommand = JSON.stringify({event: 'command', func: 'playVideo', args: []});
-      const pauseCommand = JSON.stringify({event: 'command', func: 'pauseVideo', args: []});
-      
-      if (entry.isIntersecting) {
-        iframe.contentWindow.postMessage(playCommand, '*');
-      } else {
-        iframe.contentWindow.postMessage(pauseCommand, '*');
-      }
-    });
-  }, { threshold: 0.6 });
-  
-  cards.forEach(card => observer.observe(card));
-}
+// WATCH FOR THE SHORTS TAB OPENING
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM loaded, watching for shorts tab...");
+    const shortsView = document.getElementById('view-shorts');
+    
+    if (shortsView) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    if (shortsView.classList.contains('active')) {
+                        loadShortsFeed();
+                    }
+                }
+            });
+        });
+        observer.observe(shortsView, { attributes: true });
+    }
+});
