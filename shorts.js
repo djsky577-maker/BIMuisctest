@@ -2,17 +2,15 @@ async function loadShortsFeed() {
   const feed = document.querySelector('.shorts-feed');
   if (!feed) return;
   
-  feed.innerHTML = '<div style="color:#00e0d0;text-align:center;padding:50px;font-size:16px;">Loading ad-free music...</div>';
+  feed.innerHTML = '<div style="color:#00e0d0;text-align:center;padding:50px;font-size:16px;">Loading trending music...</div>';
   
   try {
     const queries = ['trending music 2026', 'afrobeats hits', 'hip hop music video', 'rnb hits', 'amapiano'];
     const q = queries[Math.floor(Math.random() * queries.length)];
     
-    if (!window.pget) {
-        feed.innerHTML = '<div style="color:#ff5555;text-align:center;padding:50px;">API error.</div>';
-        return;
-    }
+    if (!window.pget) return;
     
+    // 1 Search Request
     const res = await window.pget('/search?q=' + encodeURIComponent(q) + '&filter=videos');
     
     if (!res || !res.items || res.items.length === 0) {
@@ -27,54 +25,21 @@ async function loadShortsFeed() {
       .sort(() => 0.5 - Math.random())
       .slice(0, 10);
     
-    for (let i = 0; i < validVideos.length; i++) {
-      const v = validVideos[i];
+    validVideos.forEach((v, index) => {
       const vid = v.url.replace('/watch?v=', '').split('&')[0];
       const title = v.title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const artist = (v.uploaderName || 'Unknown').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      
-      // GUARANTEED THUMBNAIL
-      const thumb = (window.ytThumb) ? window.ytThumb(vid) : 'https://i.ytimg.com/vi/' + vid + '/mqdefault.jpg';
+      const thumb = (window.ytThumb) ? window.ytThumb(vid, 'hqdefault') : 'https://i.ytimg.com/vi/' + vid + '/hqdefault.jpg';
       
       const card = document.createElement('div');
       card.className = 'short-card';
+      card.dataset.vid = vid; // Store video ID for lazy loading
       
-      // Try to get the stream (Video or Audio)
-      let streamUrl = '';
-      let isAudioOnly = false;
-      
-      try {
-          const streamRes = await window.pget('/streams/' + vid);
-          if (streamRes) {
-              // Prefer video, but if it fails, use audio
-              if (streamRes.videoStreams && streamRes.videoStreams.length > 0) {
-                  let best = streamRes.videoStreams.find(s => !s.videoOnly) || streamRes.videoStreams[0];
-                  streamUrl = best.url;
-              } else if (streamRes.audioStreams && streamRes.audioStreams.length > 0) {
-                  streamUrl = streamRes.audioStreams[0].url;
-                  isAudioOnly = true;
-              }
-          }
-      } catch (e) {
-          console.log("Stream fetch failed", e);
-      }
-
-      // If we have a stream, use HTML5 player. Otherwise, fallback to an image.
-      let mediaHtml = '';
-      if (streamUrl) {
-          if (isAudioOnly) {
-             mediaHtml = `<video src="${streamUrl}" poster="${thumb}" loop playsinline style="width:100%; height:100%; object-fit:cover; opacity: 0.8;"></video>`;
-          } else {
-             mediaHtml = `<video src="${streamUrl}" poster="${thumb}" loop playsinline style="width:100%; height:100%; object-fit:cover;"></video>`;
-          }
-      } else {
-          // Fallback: Show the thumbnail so at least it looks good
-          mediaHtml = `<img src="${thumb}" style="width:100%; height:100%; object-fit:cover;">`;
-      }
-
       card.innerHTML = `
         <div class="short-video-wrap">
-          ${mediaHtml}
+          <!-- Start with just the image (Instant load) -->
+          <img src="${thumb}" class="short-poster" style="width:100%; height:100%; object-fit:cover;">
+          <div class="short-loader" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#00e0d0; font-weight:bold; z-index:5;">Loading...</div>
         </div>
         <div class="short-overlay"></div>
         
@@ -111,27 +76,86 @@ async function loadShortsFeed() {
         </div>
       `;
       feed.appendChild(card);
-    }
+    });
     
-    // Play/Pause on scroll
-    setTimeout(() => {
-        const videos = document.querySelectorAll('.short-video-wrap video');
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                const video = entry.target;
-                if (entry.isIntersecting) {
-                    video.play().catch(e => console.log('Autoplay blocked', e));
-                } else {
-                    video.pause();
-                }
-            });
-        }, { threshold: 0.6 });
-        videos.forEach(vid => observer.observe(vid));
-    }, 1000);
+    setupShortObserver();
     
   } catch (err) {
-    feed.innerHTML = '<div style="color:#ff5555;text-align:center;padding:50px;">Error loading music.</div>';
+    feed.innerHTML = '<div style="color:#ff5555;text-align:center;padding:50px;">Error: ' + err.message + '</div>';
   }
+}
+
+function setupShortObserver() {
+    const cards = document.querySelectorAll('.short-card');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const card = entry.target;
+            const wrap = card.querySelector('.short-video-wrap');
+            const vid = card.dataset.vid;
+            const poster = card.querySelector('.short-poster');
+            const loader = card.querySelector('.short-loader');
+            const existingVideo = wrap.querySelector('video');
+            
+            if (entry.isIntersecting) {
+                // 1. If video already exists, just play it
+                if (existingVideo) {
+                    existingVideo.play().catch(e => console.log(e));
+                    return;
+                }
+                
+                // 2. If no video, fetch the stream (Lazy Load)
+                loader.style.display = 'block';
+                window.pget('/streams/' + vid).then(res => {
+                    let streamUrl = '';
+                    let isAudio = false;
+                    
+                    if (res && res.audioStreams && res.audioStreams.length > 0) {
+                        streamUrl = res.audioStreams[0].url;
+                        isAudio = true;
+                    }
+                    
+                    if (streamUrl) {
+                        // Create the video tag
+                        const video = document.createElement('video');
+                        video.src = streamUrl;
+                        video.poster = poster ? poster.src : '';
+                        video.loop = true;
+                        video.playsInline = true;
+                        video.style.width = '100%';
+                        video.style.height = '100%';
+                        video.style.objectFit = 'cover';
+                        
+                        if (isAudio) {
+                            video.style.opacity = '0.7'; // Make it slightly dark if audio only
+                        }
+                        
+                        // Insert video, hide loader
+                        wrap.appendChild(video);
+                        loader.style.display = 'none';
+                        if (poster) poster.style.display = 'none';
+                        
+                        // Play it
+                        video.play().catch(e => console.log("Autoplay blocked"));
+                    } else {
+                        loader.style.display = 'none';
+                        console.log("Stream not found");
+                    }
+                }).catch(e => {
+                    loader.style.display = 'none';
+                    console.log("API busy, skipping stream");
+                });
+                
+            } else {
+                // Pause video if it leaves the screen
+                if (existingVideo) {
+                    existingVideo.pause();
+                }
+            }
+        });
+    }, { threshold: 0.6 });
+    
+    cards.forEach(card => observer.observe(card));
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -140,9 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalSwitch = window.switchTab;
             window.switchTab = function(tab, el) {
                 originalSwitch(tab, el);
-                if (tab === 'shorts') {
-                    loadShortsFeed();
-                }
+                if (tab === 'shorts') loadShortsFeed();
             };
         }
     }, 1000);
