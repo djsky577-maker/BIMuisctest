@@ -27,39 +27,48 @@ async function loadShortsFeed() {
       .sort(() => 0.5 - Math.random())
       .slice(0, 10);
     
-    // Load each video asynchronously
     for (let i = 0; i < validVideos.length; i++) {
       const v = validVideos[i];
       const vid = v.url.replace('/watch?v=', '').split('&')[0];
       const title = v.title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const artist = (v.uploaderName || 'Unknown').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      const thumb = v.thumbnail || 'https://i.ytimg.com/vi/' + vid + '/mqdefault.jpg';
+      
+      // GUARANTEED THUMBNAIL
+      const thumb = (window.ytThumb) ? window.ytThumb(vid) : 'https://i.ytimg.com/vi/' + vid + '/mqdefault.jpg';
       
       const card = document.createElement('div');
       card.className = 'short-card';
       
-      // 1. Fetch the raw stream URL from Piped (No Ads)
+      // Try to get the stream (Video or Audio)
       let streamUrl = '';
+      let isAudioOnly = false;
+      
       try {
           const streamRes = await window.pget('/streams/' + vid);
-          if (streamRes && streamRes.videoStreams && streamRes.videoStreams.length > 0) {
-              // Find a good quality stream (prefer video with audio)
-              let best = streamRes.videoStreams.find(s => !s.videoOnly) || streamRes.videoStreams[0];
-              streamUrl = best.url;
-          } else if (streamRes && streamRes.audioStreams && streamRes.audioStreams.length > 0) {
-              streamUrl = streamRes.audioStreams[0].url;
+          if (streamRes) {
+              // Prefer video, but if it fails, use audio
+              if (streamRes.videoStreams && streamRes.videoStreams.length > 0) {
+                  let best = streamRes.videoStreams.find(s => !s.videoOnly) || streamRes.videoStreams[0];
+                  streamUrl = best.url;
+              } else if (streamRes.audioStreams && streamRes.audioStreams.length > 0) {
+                  streamUrl = streamRes.audioStreams[0].url;
+                  isAudioOnly = true;
+              }
           }
       } catch (e) {
           console.log("Stream fetch failed", e);
       }
 
-      // 2. Build the HTML
+      // If we have a stream, use HTML5 player. Otherwise, fallback to an image.
       let mediaHtml = '';
       if (streamUrl) {
-          // Use native HTML5 video player (ZERO ADS)
-          mediaHtml = `<video src="${streamUrl}" poster="${thumb}" autoplay loop playsinline style="width:100%; height:100%; object-fit:cover;"></video>`;
+          if (isAudioOnly) {
+             mediaHtml = `<video src="${streamUrl}" poster="${thumb}" loop playsinline style="width:100%; height:100%; object-fit:cover; opacity: 0.8;"></video>`;
+          } else {
+             mediaHtml = `<video src="${streamUrl}" poster="${thumb}" loop playsinline style="width:100%; height:100%; object-fit:cover;"></video>`;
+          }
       } else {
-          // Fallback to image if stream fails
+          // Fallback: Show the thumbnail so at least it looks good
           mediaHtml = `<img src="${thumb}" style="width:100%; height:100%; object-fit:cover;">`;
       }
 
@@ -104,7 +113,7 @@ async function loadShortsFeed() {
       feed.appendChild(card);
     }
     
-    // Setup Auto-play/Pause on scroll
+    // Play/Pause on scroll
     setTimeout(() => {
         const videos = document.querySelectorAll('.short-video-wrap video');
         const observer = new IntersectionObserver((entries) => {
@@ -125,7 +134,6 @@ async function loadShortsFeed() {
   }
 }
 
-// Trigger on Shorts click
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (window.switchTab) {

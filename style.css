@@ -2773,3 +2773,12 @@ body:has(#view-shorts.active) .mini-player {
 .short-top, .short-left, .short-right, .short-bottom, .short-progress {
   z-index: 10 !important;
 }
+
+/* Ensure video and images fill the screen */
+.short-video-wrap video, .short-video-wrap img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  position: absolute !important;
+  top: 0 !important; left: 0 !important;
+}
