@@ -110,13 +110,13 @@ function setupShortObserver() {
                         resolved = true;
                         loader.style.display = 'none';
                         // FALLBACK: YouTube Iframe
-                        const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
+                        const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
                         const iframe = document.createElement('iframe');
                         iframe.src = ytUrl;
                         iframe.style.width = '100%';
                         iframe.style.height = '100%';
                         iframe.style.border = 'none';
-                        iframe.style.pointerEvents = 'none'; // Blocks YouTube UI
+                        iframe.style.pointerEvents = 'auto'; // Blocks YouTube UI
                         wrap.appendChild(iframe);
                     }
                 }, 3000);
@@ -146,13 +146,13 @@ function setupShortObserver() {
                         media.play().catch(e => console.log(e));
                     } else {
                         // Piped failed, use Iframe
-                        const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
+                        const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
                         const iframe = document.createElement('iframe');
                         iframe.src = ytUrl;
                         iframe.style.width = '100%';
                         iframe.style.height = '100%';
                         iframe.style.border = 'none';
-                        iframe.style.pointerEvents = 'none';
+                        iframe.style.pointerEvents = 'auto';
                         wrap.appendChild(iframe);
                     }
                 }).catch(e => {
@@ -161,13 +161,13 @@ function setupShortObserver() {
                     clearTimeout(timeout);
                     loader.style.display = 'none';
                     // Piped API errored, use Iframe
-                    const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
+                    const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
                     const iframe = document.createElement('iframe');
                     iframe.src = ytUrl;
                     iframe.style.width = '100%';
                     iframe.style.height = '100%';
                     iframe.style.border = 'none';
-                    iframe.style.pointerEvents = 'none';
+                    iframe.style.pointerEvents = 'auto';
                     wrap.appendChild(iframe);
                 });
                 
