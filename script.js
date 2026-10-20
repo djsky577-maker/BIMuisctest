@@ -3736,3 +3736,28 @@ function stopLyricsSync(){
   }
   lyricsSyncData = null;
 }
+
+/* ===== SAFE APPEND: Pause music when Shorts is opened ===== */
+document.addEventListener('DOMContentLoaded', function() {
+    // Find all nav items and attach a listener to the Shorts button
+    var navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(function(item) {
+        if (item.textContent.includes('Shorts')) {
+            item.addEventListener('click', function() {
+                // 1. Pause YouTube video if playing
+                if (window.ytPlayer && typeof window.ytPlayer.pauseVideo === 'function') {
+                    try { window.ytPlayer.pauseVideo(); } catch(e) {}
+                }
+                // 2. Pause standard audio player if playing
+                var audio = document.getElementById('audioPlayer');
+                if (audio) {
+                    audio.pause();
+                }
+                // 3. Update the play/pause icons on the screen
+                if (typeof window.updateAllIcons === 'function') {
+                    window.updateAllIcons();
+                }
+            });
+        }
+    });
+});

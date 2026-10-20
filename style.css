@@ -2723,3 +2723,9 @@ body:has(#view-shorts.active) #bttBtn {
 body:has(#view-shorts.active) #backBtnSmart {
     display: none !important;
 }
+
+/* Hide the mini-player completely when Shorts is active */
+body:has(#view-shorts.active) #miniPlayer,
+body:has(#view-shorts.active) .mini-player {
+    display: none !important;
+}
