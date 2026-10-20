@@ -36,14 +36,9 @@ async function loadShortsFeed() {
       card.innerHTML = `
         <div class="short-video-wrap">
           <img src="${thumb}" class="short-poster" style="width:100%; height:100%; object-fit:cover;">
-          <div class="short-loader" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#00e0d0; font-weight:bold; z-index:5; background:rgba(0,0,0,0.8); padding:10px 20px; border-radius:20px;">Loading...</div>
+          <div class="short-loader" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#00e0d0; font-weight:bold; z-index:5; background:rgba(0,0,0,0.8); padding:10px 20px; border-radius:20px;">Fetching audio...</div>
         </div>
         <div class="short-overlay"></div>
-        
-        <!-- Unmute button (fallback if browser blocks sound) -->
-        <div class="unmute-btn" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:70px; height:70px; background:rgba(0,224,208,0.85); border-radius:50%; z-index:20; justify-content:center; align-items:center; cursor:pointer; box-shadow: 0 4px 20px rgba(0,224,208,0.5); animation: pulse 2s infinite;">
-          <svg viewBox="0 0 24 24" style="width:35px; height:35px; fill:#000;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-        </div>
         
         <div class="short-top">
           <svg viewBox="0 0 24 24" onclick="switchTab('home', this)"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
@@ -92,54 +87,64 @@ function setupShortObserver() {
             const wrap = card.querySelector('.short-video-wrap');
             const vid = card.dataset.vid;
             const loader = card.querySelector('.short-loader');
-            const unmuteBtn = card.querySelector('.unmute-btn');
             let existingIframe = wrap.querySelector('iframe');
+            let existingAudio = card.querySelector('.short-audio');
             
             if (entry.isIntersecting) {
-                if (existingIframe) {
+                // 1. If both video and audio exist, just play them
+                if (existingIframe && existingAudio) {
                     existingIframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'playVideo', args: []}), '*');
+                    existingAudio.play().catch(e => console.log("Audio play blocked", e));
                     return;
                 }
                 
-                loader.style.display = 'none';
-                
-                // THE TRICK: Autoplay WITH sound, but block all clicks.
-                // Because we NEVER click the video, YouTube skips the ad!
-                const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=0&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
-                const iframe = document.createElement('iframe');
-                iframe.src = ytUrl;
-                iframe.style.width = '100%';
-                iframe.style.height = '100%';
-                iframe.style.border = 'none';
-                // THIS IS THE MAGIC: Block all touches so YouTube never gets clicked
-                iframe.style.pointerEvents = 'none';
-                
-                // Append iframe
-                wrap.appendChild(iframe);
-                
-                // Keep the poster image behind the iframe just in case the video is transparent
-                const poster = card.querySelector('.short-poster');
-                if(poster) poster.style.display = 'none';
+                // 2. Load YouTube Video (Muted so it autoplays instantly)
+                if (!existingIframe) {
+                    const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
+                    const iframe = document.createElement('iframe');
+                    iframe.src = ytUrl;
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    iframe.style.pointerEvents = 'none'; // No YouTube UI
+                    wrap.appendChild(iframe);
+                    const poster = card.querySelector('.short-poster');
+                    if(poster) poster.style.display = 'none';
+                }
 
-                // If the browser blocks autoplay with sound, show the Tap button
-                setTimeout(() => {
-                    // Check if YouTube is playing, if not, show the unmute button
-                    if (unmuteBtn) {
-                        unmuteBtn.style.display = 'flex';
-                        unmuteBtn.onclick = function(e) {
-                            e.stopPropagation();
-                            try {
-                                iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'unMute', args: []}), '*');
-                                iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'setVolume', args: [100]}), '*');
-                            } catch(e){}
-                            unmuteBtn.style.display = 'none';
-                        };
-                    }
-                }, 1500);
+                // 3. Fetch Piped Audio (Ad-free sound)
+                if (!existingAudio) {
+                    loader.style.display = 'block';
+                    window.pget('/streams/' + vid).then(res => {
+                        loader.style.display = 'none';
+                        let streamUrl = '';
+                        if (res && res.audioStreams && res.audioStreams.length > 0) {
+                            // Get highest quality audio
+                            let best = res.audioStreams.sort((a,b) => b.bitrate - a.bitrate)[0];
+                            streamUrl = best.url;
+                        }
+                        
+                        if (streamUrl) {
+                            const audio = document.createElement('audio');
+                            audio.className = 'short-audio';
+                            audio.src = streamUrl;
+                            audio.loop = true;
+                            audio.style.display = 'none';
+                            card.appendChild(audio);
+                            audio.play().catch(e => console.log("Audio autoplay blocked", e));
+                        }
+                    }).catch(e => {
+                        loader.style.display = 'none';
+                    });
+                }
                 
             } else {
+                // Pause both video and audio when scrolled away
                 if (existingIframe) {
                     existingIframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
+                }
+                if (existingAudio) {
+                    existingAudio.pause();
                 }
             }
         });
