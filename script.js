@@ -3580,7 +3580,11 @@ function toggleMyControls(){
 /* Always build YouTube thumbnail URL directly from video ID (always HTTPS, always available) */
 function ytThumb(vid, quality){
   if(!vid) return 'https://ui-avatars.com/api/?name=?&background=00e0d0&color=000&size=200';
-  return 'https://i.ytimg.com/vi/' + vid + '/' + (quality || 'hqdefault') + '.jpg';
+  var cleanVid = vid;
+  if(cleanVid.indexOf('watch?v=') > -1) cleanVid = cleanVid.split('watch?v=')[1].split('&')[0];
+  if(cleanVid.indexOf('/') > -1) cleanVid = cleanVid.split('/').pop().split('?')[0];
+  return 'https://i.ytimg.com/vi/' + cleanVid + '/' + (quality || 'hqdefault') + '.jpg';
+}
 }
 
 /* ===== LRCLIB Lyrics Fetcher ===== */
