@@ -1,26 +1,32 @@
-// ===== SHORTS FEED LOGIC (MUSIC & SMOOTH PLAYBACK) =====
+// ===== SHORTS FEED LOGIC =====
 let shortsLoaded = false;
+
+// 1. Hook directly into the app's tab switcher
+const originalSwitchTab = window.switchTab;
+window.switchTab = function(tab, el) {
+    if (originalSwitchTab) originalSwitchTab(tab, el);
+    if (tab === 'shorts') {
+        loadShortsFeed();
+    }
+};
 
 async function loadShortsFeed() {
   if (shortsLoaded) return;
   const feed = document.querySelector('.shorts-feed');
   if (!feed) return;
   
-  feed.innerHTML = '<div style="color:#00e0d0;text-align:center;padding:50px;font-size:16px;">Finding music for you...</div>';
+  // Clear whatever is currently in the HTML (including the old Central Cee mockup)
+  feed.innerHTML = '<div style="color:#00e0d0;text-align:center;padding:50px;font-size:16px;">Loading trending music...</div>';
   
   try {
-    // 1. Fetch real trending music
-    const queries = [
-      'trending music videos 2026', 
-      'top hits 2026 official video', 
-      'afrobeats hits 2026', 
-      'hip hop music video 2026', 
-      'rnb hits 2026',
-      'amapiano songs 2026'
-    ];
+    const queries = ['trending music 2026', 'afrobeats hits', 'hip hop music video', 'rnb hits', 'amapiano'];
     const q = queries[Math.floor(Math.random() * queries.length)];
     
-    if (!window.pget) throw new Error("API not found");
+    if (!window.pget) {
+        feed.innerHTML = '<div style="color:#ff5555;text-align:center;padding:50px;">API error.</div>';
+        return;
+    }
+    
     const res = await window.pget('/search?q=' + encodeURIComponent(q) + '&filter=videos');
     
     if (!res || !res.items || res.items.length === 0) {
@@ -30,11 +36,11 @@ async function loadShortsFeed() {
 
     feed.innerHTML = '';
     
-    // Filter for songs and grab 15 random ones
+    // Filter and shuffle
     const validVideos = res.items
       .filter(v => v.url && v.title)
-      .sort(() => 0.5 - Math.random()) // Shuffle
-      .slice(0, 15);
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 10);
     
     validVideos.forEach((v, index) => {
       const vid = v.url.replace('/watch?v=', '').split('&')[0];
@@ -46,7 +52,7 @@ async function loadShortsFeed() {
       card.className = 'short-card';
       card.dataset.vid = vid;
       
-      // Add enablejsapi=1 so we can control it with postMessage
+      // enablejsapi=1 allows us to play/pause without reloading
       const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=0&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
       
       card.innerHTML = `
@@ -98,8 +104,6 @@ async function loadShortsFeed() {
     });
     
     shortsLoaded = true;
-    
-    // Wait for iframes to load before setting up the observer
     setTimeout(setupShortObserver, 1500);
     
   } catch (err) {
@@ -117,32 +121,16 @@ function setupShortObserver() {
       const iframe = card.querySelector('iframe');
       if (!iframe || !iframe.contentWindow) return;
       
-      // YouTube API commands via postMessage
       const playCommand = JSON.stringify({event: 'command', func: 'playVideo', args: []});
       const pauseCommand = JSON.stringify({event: 'command', func: 'pauseVideo', args: []});
       
       if (entry.isIntersecting) {
-        // Play video when it enters the screen
         iframe.contentWindow.postMessage(playCommand, '*');
       } else {
-        // Pause video when it leaves the screen
         iframe.contentWindow.postMessage(pauseCommand, '*');
       }
     });
-  }, { threshold: 0.6 }); // Triggers when 60% of the card is visible
+  }, { threshold: 0.6 });
   
   cards.forEach(card => observer.observe(card));
 }
-
-// Trigger load when Shorts button is clicked
-document.addEventListener('DOMContentLoaded', () => {
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => {
-        if (item.textContent.includes('Shorts')) {
-            item.addEventListener('click', () => {
-                // Small delay to allow view to slide in before fetching
-                setTimeout(loadShortsFeed, 200);
-            });
-        }
-    });
-});

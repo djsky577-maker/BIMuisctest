@@ -2729,3 +2729,18 @@ body:has(#view-shorts.active) #miniPlayer,
 body:has(#view-shorts.active) .mini-player {
     display: none !important;
 }
+
+/* Fix the scrolling for Shorts */
+.shorts-feed {
+  overflow-y: auto !important;
+  scroll-snap-type: y mandatory !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+.short-card {
+  scroll-snap-align: start !important;
+  height: 100% !important;
+}
+/* Make sure the video doesn't block your finger from scrolling */
+.short-video-wrap iframe {
+  pointer-events: none !important;
+}
