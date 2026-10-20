@@ -39,9 +39,10 @@ async function loadShortsFeed() {
         </div>
         <div class="short-overlay"></div>
         
-        <!-- Tap to unmute button -->
-        <div class="unmute-btn" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:70px; height:70px; background:rgba(0,224,208,0.85); border-radius:50%; z-index:20; justify-content:center; align-items:center; cursor:pointer; box-shadow: 0 4px 20px rgba(0,224,208,0.5); animation: pulse 2s infinite;">
-          <svg viewBox="0 0 24 24" style="width:35px; height:35px; fill:#000;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        <!-- Custom Play/Pause Button -->
+        <div class="short-play-btn" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:60px; height:60px; background:rgba(0,224,208,0.9); border-radius:50%; z-index:20; justify-content:center; align-items:center; cursor:pointer; box-shadow: 0 4px 20px rgba(0,224,208,0.6); transition: opacity 0.3s ease, transform 0.1s ease;">
+          <svg class="icon-play" viewBox="0 0 24 24" style="width:32px; height:32px; fill:#000; margin-left:4px; display:none;"><path d="M8 5v14l11-7z"/></svg>
+          <svg class="icon-pause" viewBox="0 0 24 24" style="width:32px; height:32px; fill:#000; display:block;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
         </div>
 
         <div class="short-top">
@@ -115,33 +116,60 @@ function setupShortObserver() {
                 const poster = card.querySelector('.short-poster');
                 if(poster) poster.style.display = 'none';
 
-                // SHOW UNMUTE BUTTON AFTER 1 SECOND
-                setTimeout(() => {
-                    if (unmuteBtn && !card.dataset.unmuted) {
-                        unmuteBtn.style.display = 'flex';
-                    }
-                }, 1000);
+                // Show Play/Pause button initially
+                if (playBtn) playBtn.style.display = 'flex';
+
+                // Auto-hide button after 2 seconds of playing (like TikTok)
+                let btnTimer = setTimeout(() => {
+                    if (playBtn && isPlaying) playBtn.style.opacity = '0';
+                }, 2000);
 
                 // THE 6-SECOND AD TRICK: Hide UI for 6 seconds
-                // If it's an ad, they see the ad. If it's the song, they see the video.
                 let uiTimer = setTimeout(() => {
                     if (uiLeft) uiLeft.style.opacity = '1';
                     if (uiBottom) uiBottom.style.opacity = '1';
                 }, 6000);
 
-                // TAP TO UNMUTE & SHOW UI IMMEDIATELY
-                card.addEventListener('click', function() {
-                    try {
-                        iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'unMute', args: []}), '*');
-                        iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'setVolume', args: [100]}), '*');
-                        if (unmuteBtn) unmuteBtn.style.display = 'none';
-                        card.dataset.unmuted = 'true';
-                        
-                        // If they tapped, show the UI immediately (skip the 6s wait)
-                        clearTimeout(uiTimer);
-                        if (uiLeft) uiLeft.style.opacity = '1';
-                        if (uiBottom) uiBottom.style.opacity = '1';
-                    } catch(e) {}
+                // PLAY/PAUSE & UNMUTE LOGIC
+                if(playBtn) {
+                    playBtn.onclick = function(e) {
+                        e.stopPropagation(); // Prevent double clicks
+                        if (isPlaying) {
+                            // PAUSE
+                            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
+                            iconPlay.style.display = 'block';
+                            iconPause.style.display = 'none';
+                            isPlaying = false;
+                            playBtn.style.opacity = '1'; // Keep visible when paused
+                        } else {
+                            // PLAY & UNMUTE
+                            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'playVideo', args: []}), '*');
+                            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'unMute', args: []}), '*');
+                            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'setVolume', args: [100]}), '*');
+                            iconPlay.style.display = 'none';
+                            iconPause.style.display = 'block';
+                            isPlaying = true;
+                            
+                            // Fade out after resuming
+                            setTimeout(() => { if(isPlaying) playBtn.style.opacity = '0'; }, 2000);
+                            
+                            // Show UI immediately on first play
+                            clearTimeout(uiTimer);
+                            if (uiLeft) uiLeft.style.opacity = '1';
+                            if (uiBottom) uiBottom.style.opacity = '1';
+                        }
+                    };
+                }
+
+                // Tapping anywhere else on the screen shows the button again
+                card.addEventListener('click', function(e) {
+                    if (e.target !== playBtn && !playBtn.contains(e.target)) {
+                        playBtn.style.opacity = '1';
+                        clearTimeout(btnTimer);
+                        if (isPlaying) {
+                            btnTimer = setTimeout(() => { playBtn.style.opacity = '0'; }, 2000);
+                        }
+                    }
                 });
                 
             } else {
@@ -151,7 +179,13 @@ function setupShortObserver() {
                 // Reset UI opacity for when they scroll back
                 if (uiLeft) uiLeft.style.opacity = '0';
                 if (uiBottom) uiBottom.style.opacity = '0';
-                if (unmuteBtn) unmuteBtn.style.display = 'none';
+                if (playBtn) {
+                    playBtn.style.display = 'none';
+                    playBtn.style.opacity = '1';
+                    isPlaying = true;
+                    iconPlay.style.display = 'none';
+                    iconPause.style.display = 'block';
+                }
             }
         });
     }, { threshold: 0.6 });
