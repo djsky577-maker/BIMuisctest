@@ -2435,3 +2435,76 @@ body { background: #050505 !important; }
 .short-progress {
   bottom: 0 !important;
 }
+
+/* ===== SHORTS UI OVERRIDES V2: FULL SCREEN ===== */
+#view-shorts {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #000 !important;
+  z-index: 9000 !important; /* High enough to cover header, low enough for bottom nav */
+  overflow: hidden !important;
+}
+
+.shorts-feed {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.short-card {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.short-video-wrap {
+  position: absolute !important;
+  top: 0 !important; left: 0 !important;
+  width: 100% !important; height: 100% !important;
+}
+
+.short-video-wrap img {
+  width: 100% !important; height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* Push the top bar to the absolute top */
+.short-top {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  padding: 40px 20px 20px 20px !important; /* Safe area for phone notch */
+  background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent) !important;
+}
+
+/* Move right icons up above the bottom nav */
+.short-right {
+  bottom: 140px !important; 
+}
+
+/* Move left text up above the bottom nav */
+.short-left {
+  bottom: 140px !important;
+}
+
+/* Move the audio bar to sit perfectly above the bottom nav */
+.short-bottom {
+  position: absolute !important;
+  bottom: 90px !important; 
+  width: 90% !important;
+  left: 5% !important;
+}
+
+/* Hide the floating back button so it doesn't block the video */
+#backBtnSmart {
+  display: none !important;
+}
