@@ -3736,3 +3736,14 @@ function stopLyricsSync(){
   }
   lyricsSyncData = null;
 }
+
+/* SAFE OVERRIDE FOR THUMBNAILS - DO NOT DELETE */
+function ytThumb(vid, quality){
+  if(!vid) return 'https://ui-avatars.com/api/?name=?&background=00e0d0&color=000&size=200';
+  var cleanVid = vid;
+  if(typeof cleanVid === 'string'){
+    if(cleanVid.indexOf('watch?v=') > -1) cleanVid = cleanVid.split('watch?v=')[1].split('&')[0];
+    if(cleanVid.indexOf('/') > -1) cleanVid = cleanVid.split('/').pop().split('?')[0];
+  }
+  return 'https://i.ytimg.com/vi/' + cleanVid + '/' + (quality || 'mqdefault') + '.jpg';
+}
