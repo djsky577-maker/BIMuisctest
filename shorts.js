@@ -10,7 +10,6 @@ async function loadShortsFeed() {
     
     if (!window.pget) return;
     
-    // 1 Search Request
     const res = await window.pget('/search?q=' + encodeURIComponent(q) + '&filter=videos');
     
     if (!res || !res.items || res.items.length === 0) {
@@ -25,7 +24,7 @@ async function loadShortsFeed() {
       .sort(() => 0.5 - Math.random())
       .slice(0, 10);
     
-    validVideos.forEach((v, index) => {
+    validVideos.forEach((v) => {
       const vid = v.url.replace('/watch?v=', '').split('&')[0];
       const title = v.title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const artist = (v.uploaderName || 'Unknown').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -33,13 +32,15 @@ async function loadShortsFeed() {
       
       const card = document.createElement('div');
       card.className = 'short-card';
-      card.dataset.vid = vid; // Store video ID for lazy loading
+      card.dataset.vid = vid;
       
       card.innerHTML = `
         <div class="short-video-wrap">
-          <!-- Start with just the image (Instant load) -->
           <img src="${thumb}" class="short-poster" style="width:100%; height:100%; object-fit:cover;">
-          <div class="short-loader" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#00e0d0; font-weight:bold; z-index:5;">Loading...</div>
+          <div class="short-loader" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#00e0d0; font-weight:bold; z-index:5; background:rgba(0,0,0,0.6); padding:10px 20px; border-radius:20px;">Loading audio...</div>
+          <div class="short-tap-play" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:70px; height:70px; background:rgba(0,224,208,0.8); border-radius:50%; z-index:20; justify-content:center; align-items:center; cursor:pointer; box-shadow: 0 4px 20px rgba(0,224,208,0.5);">
+            <svg viewBox="0 0 24 24" style="width:35px; height:35px; fill:#000; margin-left:5px;"><path d="M8 5v14l11-7z"/></svg>
+          </div>
         </div>
         <div class="short-overlay"></div>
         
@@ -59,10 +60,6 @@ async function loadShortsFeed() {
             <button class="short-follow-btn">Follow</button>
           </div>
           <div class="short-tags"><span>#music</span><span>#trending</span></div>
-        </div>
-
-        <div class="short-right">
-          <div class="short-icon-btn"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg></div>
         </div>
 
         <div class="short-bottom">
@@ -95,61 +92,72 @@ function setupShortObserver() {
             const vid = card.dataset.vid;
             const poster = card.querySelector('.short-poster');
             const loader = card.querySelector('.short-loader');
-            const existingVideo = wrap.querySelector('video');
+            const playBtn = card.querySelector('.short-tap-play');
+            let existingMedia = wrap.querySelector('video, audio');
             
             if (entry.isIntersecting) {
-                // 1. If video already exists, just play it
-                if (existingVideo) {
-                    existingVideo.play().catch(e => console.log(e));
+                // If media already exists, just play it
+                if (existingMedia) {
+                    existingMedia.play().then(() => {
+                        if (playBtn) playBtn.style.display = 'none';
+                    }).catch(e => {
+                        // Autoplay blocked! Show the tap button
+                        if (playBtn) playBtn.style.display = 'flex';
+                    });
                     return;
                 }
                 
-                // 2. If no video, fetch the stream (Lazy Load)
+                // Fetch stream
                 loader.style.display = 'block';
                 window.pget('/streams/' + vid).then(res => {
                     let streamUrl = '';
-                    let isAudio = false;
-                    
                     if (res && res.audioStreams && res.audioStreams.length > 0) {
                         streamUrl = res.audioStreams[0].url;
-                        isAudio = true;
                     }
                     
                     if (streamUrl) {
-                        // Create the video tag
-                        const video = document.createElement('video');
-                        video.src = streamUrl;
-                        video.poster = poster ? poster.src : '';
-                        video.loop = true;
-                        video.playsInline = true;
-                        video.style.width = '100%';
-                        video.style.height = '100%';
-                        video.style.objectFit = 'cover';
+                        const media = document.createElement('video'); // use video tag for iOS compatibility
+                        media.src = streamUrl;
+                        media.loop = true;
+                        media.playsInline = true;
+                        media.style.width = '100%';
+                        media.style.height = '100%';
+                        media.style.objectFit = 'cover';
                         
-                        if (isAudio) {
-                            video.style.opacity = '0.7'; // Make it slightly dark if audio only
-                        }
+                        // Hide the video visual, just play audio (since we have the poster image)
+                        media.style.opacity = '0'; 
                         
-                        // Insert video, hide loader
-                        wrap.appendChild(video);
+                        media.onerror = function() {
+                            loader.style.display = 'none';
+                            loader.textContent = 'Stream blocked by YT. Skipping...';
+                        };
+
+                        wrap.appendChild(media);
                         loader.style.display = 'none';
-                        if (poster) poster.style.display = 'none';
                         
-                        // Play it
-                        video.play().catch(e => console.log("Autoplay blocked"));
+                        media.play().then(() => {
+                            if (playBtn) playBtn.style.display = 'none';
+                        }).catch(e => {
+                            // Browser blocked autoplay
+                            if (playBtn) {
+                                playBtn.style.display = 'flex';
+                                playBtn.onclick = () => {
+                                    media.play();
+                                    playBtn.style.display = 'none';
+                                };
+                            }
+                        });
                     } else {
                         loader.style.display = 'none';
-                        console.log("Stream not found");
                     }
                 }).catch(e => {
                     loader.style.display = 'none';
-                    console.log("API busy, skipping stream");
                 });
                 
             } else {
-                // Pause video if it leaves the screen
-                if (existingVideo) {
-                    existingVideo.pause();
+                // Pause if it scrolls away
+                if (existingMedia) {
+                    existingMedia.pause();
                 }
             }
         });
