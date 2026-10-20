@@ -9,7 +9,6 @@ async function loadShortsFeed() {
     const q = queries[Math.floor(Math.random() * queries.length)];
     
     if (!window.pget) return;
-    
     const res = await window.pget('/search?q=' + encodeURIComponent(q) + '&filter=videos');
     
     if (!res || !res.items || res.items.length === 0) {
@@ -37,10 +36,7 @@ async function loadShortsFeed() {
       card.innerHTML = `
         <div class="short-video-wrap">
           <img src="${thumb}" class="short-poster" style="width:100%; height:100%; object-fit:cover;">
-          <div class="short-loader" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#00e0d0; font-weight:bold; z-index:5; background:rgba(0,0,0,0.6); padding:10px 20px; border-radius:20px;">Loading audio...</div>
-          <div class="short-tap-play" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:70px; height:70px; background:rgba(0,224,208,0.8); border-radius:50%; z-index:20; justify-content:center; align-items:center; cursor:pointer; box-shadow: 0 4px 20px rgba(0,224,208,0.5);">
-            <svg viewBox="0 0 24 24" style="width:35px; height:35px; fill:#000; margin-left:5px;"><path d="M8 5v14l11-7z"/></svg>
-          </div>
+          <div class="short-loader" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#00e0d0; font-weight:bold; z-index:5; background:rgba(0,0,0,0.8); padding:10px 20px; border-radius:20px;">Loading audio...</div>
         </div>
         <div class="short-overlay"></div>
         
@@ -90,74 +86,98 @@ function setupShortObserver() {
             const card = entry.target;
             const wrap = card.querySelector('.short-video-wrap');
             const vid = card.dataset.vid;
-            const poster = card.querySelector('.short-poster');
             const loader = card.querySelector('.short-loader');
-            const playBtn = card.querySelector('.short-tap-play');
-            let existingMedia = wrap.querySelector('video, audio');
+            let existingMedia = wrap.querySelector('video, iframe');
             
             if (entry.isIntersecting) {
-                // If media already exists, just play it
                 if (existingMedia) {
-                    existingMedia.play().then(() => {
-                        if (playBtn) playBtn.style.display = 'none';
-                    }).catch(e => {
-                        // Autoplay blocked! Show the tap button
-                        if (playBtn) playBtn.style.display = 'flex';
-                    });
+                    // If it's an iframe, reload it to play. If video, just play.
+                    if(existingMedia.tagName === 'IFRAME') {
+                        existingMedia.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'playVideo', args: []}), '*');
+                    } else {
+                        existingMedia.play().catch(e => console.log(e));
+                    }
                     return;
                 }
                 
-                // Fetch stream
                 loader.style.display = 'block';
+                loader.textContent = 'Loading...';
+                
+                // Try to fetch Piped stream, but fallback to YT iframe after 3 seconds
+                let resolved = false;
+                let timeout = setTimeout(() => {
+                    if (!resolved) {
+                        resolved = true;
+                        loader.style.display = 'none';
+                        // FALLBACK: YouTube Iframe
+                        const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
+                        const iframe = document.createElement('iframe');
+                        iframe.src = ytUrl;
+                        iframe.style.width = '100%';
+                        iframe.style.height = '100%';
+                        iframe.style.border = 'none';
+                        iframe.style.pointerEvents = 'none'; // Blocks YouTube UI
+                        wrap.appendChild(iframe);
+                    }
+                }, 3000);
+
                 window.pget('/streams/' + vid).then(res => {
+                    if (resolved) return;
+                    resolved = true;
+                    clearTimeout(timeout);
+                    loader.style.display = 'none';
+                    
                     let streamUrl = '';
                     if (res && res.audioStreams && res.audioStreams.length > 0) {
                         streamUrl = res.audioStreams[0].url;
                     }
                     
                     if (streamUrl) {
-                        const media = document.createElement('video'); // use video tag for iOS compatibility
+                        const media = document.createElement('video');
                         media.src = streamUrl;
                         media.loop = true;
                         media.playsInline = true;
                         media.style.width = '100%';
                         media.style.height = '100%';
                         media.style.objectFit = 'cover';
+                        media.style.opacity = '0'; // hide the broken video element, keep poster
                         
-                        // Hide the video visual, just play audio (since we have the poster image)
-                        media.style.opacity = '0'; 
-                        
-                        media.onerror = function() {
-                            loader.style.display = 'none';
-                            loader.textContent = 'Stream blocked by YT. Skipping...';
-                        };
-
                         wrap.appendChild(media);
-                        loader.style.display = 'none';
-                        
-                        media.play().then(() => {
-                            if (playBtn) playBtn.style.display = 'none';
-                        }).catch(e => {
-                            // Browser blocked autoplay
-                            if (playBtn) {
-                                playBtn.style.display = 'flex';
-                                playBtn.onclick = () => {
-                                    media.play();
-                                    playBtn.style.display = 'none';
-                                };
-                            }
-                        });
+                        media.play().catch(e => console.log(e));
                     } else {
-                        loader.style.display = 'none';
+                        // Piped failed, use Iframe
+                        const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
+                        const iframe = document.createElement('iframe');
+                        iframe.src = ytUrl;
+                        iframe.style.width = '100%';
+                        iframe.style.height = '100%';
+                        iframe.style.border = 'none';
+                        iframe.style.pointerEvents = 'none';
+                        wrap.appendChild(iframe);
                     }
                 }).catch(e => {
+                    if (resolved) return;
+                    resolved = true;
+                    clearTimeout(timeout);
                     loader.style.display = 'none';
+                    // Piped API errored, use Iframe
+                    const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
+                    const iframe = document.createElement('iframe');
+                    iframe.src = ytUrl;
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    iframe.style.pointerEvents = 'none';
+                    wrap.appendChild(iframe);
                 });
                 
             } else {
-                // Pause if it scrolls away
                 if (existingMedia) {
-                    existingMedia.pause();
+                    if(existingMedia.tagName === 'IFRAME') {
+                        existingMedia.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
+                    } else {
+                        existingMedia.pause();
+                    }
                 }
             }
         });
