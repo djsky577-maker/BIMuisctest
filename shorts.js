@@ -36,7 +36,7 @@ async function loadShortsFeed() {
       card.innerHTML = `
         <div class="short-video-wrap">
           <img src="${thumb}" class="short-poster" style="width:100%; height:100%; object-fit:cover;">
-          <div class="short-loader" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#00e0d0; font-weight:bold; z-index:5; background:rgba(0,0,0,0.8); padding:10px 20px; border-radius:20px;">Loading audio...</div>
+          <div class="short-loader" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#00e0d0; font-weight:bold; z-index:5; background:rgba(0,0,0,0.8); padding:10px 20px; border-radius:20px;">Loading...</div>
         </div>
         <div class="short-overlay"></div>
         
@@ -87,37 +87,23 @@ function setupShortObserver() {
             const wrap = card.querySelector('.short-video-wrap');
             const vid = card.dataset.vid;
             const loader = card.querySelector('.short-loader');
-            let existingMedia = wrap.querySelector('video, iframe');
+            let existingIframe = wrap.querySelector('iframe');
             
             if (entry.isIntersecting) {
-                if (existingMedia) {
-                    // If it's an iframe, reload it to play. If video, just play.
-                    if(existingMedia.tagName === 'IFRAME') {
-                        existingMedia.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'playVideo', args: []}), '*');
-                    } else {
-                        existingMedia.play().catch(e => console.log(e));
-                    }
+                if (existingIframe) {
+                    existingIframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'playVideo', args: []}), '*');
                     return;
                 }
                 
                 loader.style.display = 'block';
-                loader.textContent = 'Loading...';
                 
-                // Try to fetch Piped stream, but fallback to YT iframe after 3 seconds
+                // Wait 3 seconds for Piped, then fallback to muted YouTube iframe
                 let resolved = false;
                 let timeout = setTimeout(() => {
                     if (!resolved) {
                         resolved = true;
                         loader.style.display = 'none';
-                        // FALLBACK: YouTube Iframe
-                        const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
-                        const iframe = document.createElement('iframe');
-                        iframe.src = ytUrl;
-                        iframe.style.width = '100%';
-                        iframe.style.height = '100%';
-                        iframe.style.border = 'none';
-                        iframe.style.pointerEvents = 'auto'; // Blocks YouTube UI
-                        wrap.appendChild(iframe);
+                        createMutedIframe(wrap, vid, card);
                     }
                 }, 3000);
 
@@ -140,50 +126,57 @@ function setupShortObserver() {
                         media.style.width = '100%';
                         media.style.height = '100%';
                         media.style.objectFit = 'cover';
-                        media.style.opacity = '0'; // hide the broken video element, keep poster
-                        
+                        media.style.opacity = '0';
                         wrap.appendChild(media);
                         media.play().catch(e => console.log(e));
                     } else {
-                        // Piped failed, use Iframe
-                        const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
-                        const iframe = document.createElement('iframe');
-                        iframe.src = ytUrl;
-                        iframe.style.width = '100%';
-                        iframe.style.height = '100%';
-                        iframe.style.border = 'none';
-                        iframe.style.pointerEvents = 'auto';
-                        wrap.appendChild(iframe);
+                        createMutedIframe(wrap, vid, card);
                     }
                 }).catch(e => {
                     if (resolved) return;
                     resolved = true;
                     clearTimeout(timeout);
                     loader.style.display = 'none';
-                    // Piped API errored, use Iframe
-                    const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
-                    const iframe = document.createElement('iframe');
-                    iframe.src = ytUrl;
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    iframe.style.border = 'none';
-                    iframe.style.pointerEvents = 'auto';
-                    wrap.appendChild(iframe);
+                    createMutedIframe(wrap, vid, card);
                 });
-                
             } else {
-                if (existingMedia) {
-                    if(existingMedia.tagName === 'IFRAME') {
-                        existingMedia.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
-                    } else {
-                        existingMedia.pause();
-                    }
+                if (existingIframe) {
+                    existingIframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
                 }
+                let media = wrap.querySelector('video');
+                if(media) media.pause();
             }
         });
     }, { threshold: 0.6 });
     
     cards.forEach(card => observer.observe(card));
+}
+
+function createMutedIframe(wrap, vid, card) {
+    const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1`;
+    const iframe = document.createElement('iframe');
+    iframe.src = ytUrl;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    iframe.style.pointerEvents = 'auto';
+    wrap.appendChild(iframe);
+    
+    // THE 4-SECOND TRICK
+    setTimeout(function() {
+        try {
+            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'unMute', args: []}), '*');
+            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'setVolume', args: [100]}), '*');
+        } catch(e) {}
+    }, 4000);
+
+    // Manual tap to unmute fallback
+    card.addEventListener('click', function() {
+        try {
+            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'unMute', args: []}), '*');
+            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'setVolume', args: [100]}), '*');
+        } catch(e) {}
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
