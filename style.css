@@ -2508,3 +2508,24 @@ body { background: #050505 !important; }
 #backBtnSmart {
   display: none !important;
 }
+
+/* Hide the scroll-to-top and back buttons ONLY on the Shorts page */
+#view-shorts.active ~ #bttBtn,
+#view-shorts.active ~ #backBtnSmart {
+    display: none !important;
+}
+
+/* Move the text and icons up so they don't get cut off by the audio bar */
+.short-left, .short-right {
+    bottom: 170px !important; 
+}
+
+/* Ensure the audio bar sits safely above the bottom nav */
+.short-bottom {
+    bottom: 90px !important; 
+}
+
+/* Hide the progress line if it looks weird */
+.short-progress {
+    display: none !important;
+}
