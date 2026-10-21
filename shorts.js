@@ -5,7 +5,7 @@ async function loadShortsFeed() {
   feed.innerHTML = '<div style="color:#00e0d0;text-align:center;padding:50px;font-size:16px;">Loading music...</div>';
   
   try {
-    const queries = ['trending music audio', 'afrobeats audio', 'hip hop audio', 'rnb audio', 'amapiano audio', 'new songs 2026 lyrics'];
+    const queries = ['afrobeats #shorts', 'hip hop #shorts', 'rnb #shorts', 'amapiano #shorts', 'music lyrics #shorts', 'trending music #shorts'];
     const q = queries[Math.floor(Math.random() * queries.length)];
     
     if (!window.pget) return;
