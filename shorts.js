@@ -38,7 +38,7 @@ async function loadShortsFeed() {
         <div class="short-video-wrap">
           <img src="${thumb}" class="short-poster" style="width:100%; height:100%; object-fit:cover; z-index:1; position:absolute;">
         </div>
-        <div class="short-overlay" style="z-index:2; position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 15%, transparent 60%, rgba(0,0,0,0.8) 100%);"></div>
+        <div class="short-overlay" style="pointer-events: none; z-index:2; position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 15%, transparent 60%, rgba(0,0,0,0.8) 100%);"></div>
         
         <!-- Center Play/Pause Button -->
         <div class="short-play-btn" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:70px; height:70px; background:rgba(0,224,208,0.9); border-radius:50%; z-index:30; justify-content:center; align-items:center; cursor:pointer; box-shadow: 0 4px 20px rgba(0,224,208,0.6); transition: opacity 0.3s ease;">
@@ -118,7 +118,7 @@ function setupShortObserver() {
                 iframe.style.position = 'absolute';
                 iframe.style.top = '0';
                 iframe.style.left = '0';
-                iframe.style.pointerEvents = 'none'; // Block YouTube UI
+                iframe.style.pointerEvents = 'auto'; // Block YouTube UI
                 wrap.appendChild(iframe);
                 
                 const poster = card.querySelector('.short-poster');
