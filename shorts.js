@@ -5,7 +5,7 @@ async function loadShortsFeed() {
   feed.innerHTML = '<div style="color:#00e0d0;text-align:center;padding:50px;font-size:16px;">Loading music...</div>';
   
   try {
-    const queries = ['trending music 2026', 'afrobeats hits', 'hip hop music video', 'rnb hits', 'amapiano'];
+    const queries = ['trending music audio', 'afrobeats audio', 'hip hop audio', 'rnb audio', 'amapiano audio', 'new songs 2026 lyrics'];
     const q = queries[Math.floor(Math.random() * queries.length)];
     
     if (!window.pget) return;
@@ -19,7 +19,18 @@ async function loadShortsFeed() {
     feed.innerHTML = '';
     
     const validVideos = res.items
-      .filter(v => v.url && v.title)
+      .filter(v => {
+        if (!v.url || !v.title) return false;
+        const uploader = (v.uploaderName || '').toLowerCase();
+        const title = (v.title || '').toLowerCase();
+        
+        // Block big labels and heavy ad channels
+        if (uploader.includes('vevo') || uploader.includes('official') || uploader.includes('records')) return false;
+        // Block official music videos
+        if (title.includes('official video') || title.includes('music video') || title.includes('clip officiel')) return false;
+        
+        return true;
+      })
       .sort(() => 0.5 - Math.random())
       .slice(0, 10);
     
