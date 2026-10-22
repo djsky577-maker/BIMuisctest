@@ -10,7 +10,6 @@ function switchShortsTab(tab) {
     const tabForyou = document.getElementById('tab-foryou');
     const tabAudios = document.getElementById('tab-audios');
     
-    // Stop any playing audio when switching tabs
     if (globalAudio) {
         globalAudio.pause();
         globalAudio.src = '';
@@ -76,7 +75,6 @@ async function loadShortsFeed(tab) {
       card.dataset.vid = vid;
       
       if (tab === 'foryou') {
-          // FOR YOU TAB (Video)
           card.innerHTML = `
             <div class="short-video-wrap"><img src="${thumb}" class="short-poster" style="width:100%; height:100%; object-fit:cover; z-index:1; position:absolute;"></div>
             <div class="short-overlay" style="pointer-events: none; z-index:3; position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 20%, transparent 70%, rgba(0,0,0,0.8) 100%);"></div>
@@ -106,12 +104,10 @@ async function loadShortsFeed(tab) {
             </div>
           `;
       } else {
-          // AUDIOS TAB (Spotify Style)
+          // SPOTIFY STYLE UI (Made Bigger & Centered)
           card.innerHTML = `
-            <!-- Blurred Background -->
-            <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('${thumb}') center/cover; filter: blur(30px) brightness(0.3); transform: scale(1.2); z-index:1;"></div>
-            <!-- Dark Overlay -->
-            <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.8)); z-index:2;"></div>
+            <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('${thumb}') center/cover; filter: blur(40px) brightness(0.3); transform: scale(1.2); z-index:1;"></div>
+            <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.9)); z-index:2;"></div>
             
             <div class="short-top" style="z-index:10; display:flex; justify-content:space-between; align-items:center; padding: 40px 20px 20px 20px; position:absolute; top:0; width:100%;">
               <div style="display:flex; align-items:center; gap: 15px;">
@@ -123,19 +119,20 @@ async function loadShortsFeed(tab) {
               </div>
             </div>
 
-            <!-- Spotify Style Layout -->
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:5; padding: 20px;">
-                <img src="${thumb}" style="width:280px; height:280px; border-radius:12px; object-fit:cover; box-shadow: 0 15px 50px rgba(0,0,0,0.8); margin-bottom: 40px;">
-                <div style="width:100%; max-width:300px; text-align:left;">
-                    <h2 style="color:#fff; font-size:24px; font-weight:900; margin:0 0 8px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${title}</h2>
-                    <p style="color:rgba(255,255,255,0.7); font-size:16px; margin:0 0 30px 0;">${artist}</p>
+                <!-- HUGE ALBUM ART -->
+                <img src="${thumb}" style="width:85vw; max-width:380px; aspect-ratio:1; border-radius:16px; object-fit:cover; box-shadow: 0 20px 50px rgba(0,0,0,0.8); margin-bottom: 40px;">
+                
+                <div style="width:100%; max-width:380px; text-align:left; padding: 0 10px;">
+                    <h2 style="color:#fff; font-size:26px; font-weight:900; margin:0 0 8px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${title}</h2>
+                    <p style="color:rgba(255,255,255,0.7); font-size:18px; margin:0 0 30px 0;">${artist}</p>
                     
                     <!-- Progress Bar -->
                     <div style="width:100%; height:4px; background:rgba(255,255,255,0.2); border-radius:2px; margin-bottom:10px;">
                         <div class="audio-progress" style="width:0%; height:100%; background:#00e0d0; border-radius:2px; transition:width 0.1s linear;"></div>
                     </div>
                     
-                    <!-- Controls (Play button will show if blocked) -->
+                    <!-- Play/Pause Button -->
                     <div style="display:flex; justify-content:center; align-items:center; margin-top:20px;">
                         <div class="audio-play-btn" style="width:70px; height:70px; background:#00e0d0; border-radius:50%; display:flex; justify-content:center; align-items:center; cursor:pointer; box-shadow: 0 4px 20px rgba(0,224,208,0.4);">
                             <svg class="icon-play" viewBox="0 0 24 24" style="width:35px; height:35px; fill:#000; margin-left:5px; display:block;"><path d="M8 5v14l11-7z"/></svg>
@@ -181,7 +178,7 @@ function setupShortObserver(tab) {
                     if (existingIframe) existingIframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
                 }
             } else {
-                // AUDIOS TAB LOGIC (Spotify Style)
+                // AUDIOS TAB
                 const playBtn = card.querySelector('.audio-play-btn');
                 const iconPlay = card.querySelector('.icon-play');
                 const iconPause = card.querySelector('.icon-pause');
@@ -189,54 +186,75 @@ function setupShortObserver(tab) {
                 
                 if (entry.isIntersecting) {
                     currentAudioCard = card;
-                    
-                    // If audio already loaded for this card
-                    if (globalAudio.src && globalAudio.dataset.vid === vid) {
-                        globalAudio.play().then(() => {
-                            if(iconPlay) { iconPlay.style.display = 'none'; iconPause.style.display = 'block'; }
-                        }).catch(e => console.log(e));
-                        return;
-                    }
-                    
-                    // Fetch new audio
-                    if(iconPlay) { iconPlay.style.display = 'none'; iconPause.style.display = 'block'; }
+                    globalAudio.pause(); 
+                    if(iconPlay) { iconPlay.style.display = 'block'; iconPause.style.display = 'none'; }
                     progressBar.style.width = '0%';
                     
-                    window.pget('/streams/' + vid).then(res => {
-                        let streamUrl = '';
-                        if (res && res.audioStreams && res.audioStreams.length > 0) {
-                            streamUrl = res.audioStreams.sort((a,b) => b.bitrate - a.bitrate)[0].url;
+                    playBtn.onclick = async (e) => {
+                        e.stopPropagation();
+                        
+                        if (globalAudio.dataset.vid === vid && globalAudio.src) {
+                            if (globalAudio.paused) {
+                                await globalAudio.play();
+                                iconPlay.style.display = 'none'; iconPause.style.display = 'block';
+                            } else {
+                                globalAudio.pause();
+                                iconPlay.style.display = 'block'; iconPause.style.display = 'none';
+                            }
+                            return;
                         }
+                        
+                        // Fetch Audio
+                        iconPlay.style.display = 'none'; 
+                        iconPause.style.display = 'block';
+                        
+                        let streamUrl = '';
+                        
+                        // 1. Try Piped
+                        try {
+                            const res = await window.pget('/streams/' + vid);
+                            if (res && res.audioStreams && res.audioStreams.length > 0) {
+                                streamUrl = res.audioStreams.sort((a,b) => b.bitrate - a.bitrate)[0].url;
+                            }
+                        } catch(err) {}
+                        
+                        // 2. Try Invidious Fallback
+                        if (!streamUrl) {
+                            const invInstances = ['https://inv.nadeko.net', 'https://invidious.nerdvpn.de', 'https://iv.melmac.space'];
+                            for (let inst of invInstances) {
+                                try {
+                                    const r = await fetch(inst + '/api/v1/videos/' + vid);
+                                    if (r.ok) {
+                                        const data = await r.json();
+                                        if (data && data.adaptiveFormats) {
+                                            const audio = data.adaptiveFormats.find(f => f.type && f.type.includes('audio'));
+                                            if (audio && audio.url) { streamUrl = audio.url; break; }
+                                        }
+                                    }
+                                } catch(err) {}
+                            }
+                        }
+                        
                         if (streamUrl) {
                             globalAudio.src = streamUrl;
                             globalAudio.dataset.vid = vid;
-                            globalAudio.play().then(() => {
-                                if(iconPlay) { iconPlay.style.display = 'none'; iconPause.style.display = 'block'; }
-                            }).catch(e => {
-                                // Autoplay blocked, show play button
-                                if(iconPlay) { iconPlay.style.display = 'block'; iconPause.style.display = 'none'; }
-                            });
-                            
-                            // Play/Pause logic for the Spotify button
-                            playBtn.onclick = (e) => {
-                                e.stopPropagation();
-                                if (globalAudio.paused) {
-                                    globalAudio.play();
-                                    iconPlay.style.display = 'none'; iconPause.style.display = 'block';
-                                } else {
-                                    globalAudio.pause();
-                                    iconPlay.style.display = 'block'; iconPause.style.display = 'none';
-                                }
-                            };
-                            
+                            try {
+                                await globalAudio.play();
+                                iconPlay.style.display = 'none'; iconPause.style.display = 'block';
+                            } catch(err) {
+                                iconPlay.style.display = 'block'; iconPause.style.display = 'none';
+                                alert("Browser blocked audio. Please tap again.");
+                            }
                         } else {
-                            card.innerHTML = '<div style="color:#ff5555; text-align:center; padding:50px; font-size:16px;">Audio blocked by YouTube.</div>';
+                            iconPlay.style.display = 'block'; iconPause.style.display = 'none';
+                            playBtn.innerHTML = '<span style="font-size:12px;font-weight:bold;">No Audio</span>';
                         }
-                    }).catch(e => console.log(e));
+                    };
                     
                 } else {
                     if (globalAudio.dataset.vid === vid) {
                         globalAudio.pause();
+                        if(iconPlay) { iconPlay.style.display = 'block'; iconPause.style.display = 'none'; }
                     }
                 }
             }
