@@ -186,22 +186,45 @@ function setupShortObserver(tab) {
                     loader.innerHTML = '<div style="color:#00e0d0; font-weight:bold; z-index:5; position:absolute; top:60%; left:50%; transform:translate(-50%,-50%);">Fetching Audio...</div>';
                     card.appendChild(loader);
                     
-                    window.pget('/streams/' + vid).then(res => {
-                        loader.remove();
-                        let streamUrl = '';
-                        if (res && res.audioStreams && res.audioStreams.length > 0) {
-                            let best = res.audioStreams.sort((a,b) => b.bitrate - a.bitrate)[0];
-                            streamUrl = best.url;
+                    // NEW FALLBACK SYSTEM: Try Piped first, then Invidious
+                    async function getAudioUrl() {
+                        // 1. Try Piped
+                        try {
+                            const res = await window.pget('/streams/' + vid);
+                            if (res && res.audioStreams && res.audioStreams.length > 0) {
+                                let best = res.audioStreams.sort((a,b) => b.bitrate - a.bitrate)[0];
+                                return best.url;
+                            }
+                        } catch(e) {}
+
+                        // 2. Fallback to Invidious (More reliable for audio)
+                        const invInstances = ['https://inv.nadeko.net', 'https://invidious.nerdvpn.de', 'https://iv.melmac.space'];
+                        for (let inst of invInstances) {
+                            try {
+                                const r = await fetch(inst + '/api/v1/videos/' + vid);
+                                if (r.ok) {
+                                    const data = await r.json();
+                                    if (data && data.adaptiveFormats) {
+                                        const audio = data.adaptiveFormats.find(f => f.type && f.type.includes('audio'));
+                                        if (audio && audio.url) return audio.url;
+                                    }
+                                }
+                            } catch(e) {}
                         }
+                        return null;
+                    }
+
+                    getAudioUrl().then(streamUrl => {
+                        loader.remove();
                         if (streamUrl) {
                             const audio = document.createElement('audio');
                             audio.src = streamUrl;
                             audio.loop = true;
                             card.appendChild(audio);
                             audio.play().catch(e => console.log("Need user tap to play audio", e));
+                        } else {
+                            loader.innerHTML = '<div style="color:#ff5555; font-weight:bold; z-index:5; position:absolute; top:60%; left:50%; transform:translate(-50%,-50%);">Audio not available</div>';
                         }
-                    }).catch(e => {
-                        loader.innerHTML = '<div style="color:#ff5555; font-weight:bold; z-index:5; position:absolute; top:60%; left:50%; transform:translate(-50%,-50%);">Audio not available</div>';
                     });
                 } else {
                     if (existingAudio) existingAudio.pause();
