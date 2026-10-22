@@ -1,7 +1,6 @@
 let currentShortsTab = 'foryou';
 let shortsObserver = null;
 
-// Switch tabs logic
 function switchShortsTab(tab) {
     if (currentShortsTab === tab) return;
     currentShortsTab = tab;
@@ -28,7 +27,6 @@ async function loadShortsFeed(tab) {
   const feed = document.querySelector('.shorts-feed');
   if (!feed) return;
   
-  // Stop any playing media before clearing
   if (shortsObserver) shortsObserver.disconnect();
   feed.innerHTML = '<div style="color:#00e0d0;text-align:center;padding:50px;font-size:16px;">Loading...</div>';
   
@@ -37,7 +35,6 @@ async function loadShortsFeed(tab) {
     if (tab === 'foryou') {
         queries = ['afrobeats #shorts', 'hip hop #shorts', 'rnb #shorts', 'amapiano #shorts'];
     } else {
-        // Audios tab: Search for lyrics/audio only
         queries = ['trending music audio', 'afrobeats lyrics', 'hip hop audio', 'rnb lyrics', 'amapiano audio'];
     }
     
@@ -54,7 +51,6 @@ async function loadShortsFeed(tab) {
     
     let validVideos = res.items.filter(v => v.url && v.title);
     
-    // If Audios tab, aggressively block VEVO and Music Videos to ensure no ads
     if (tab === 'audios') {
         validVideos = validVideos.filter(v => {
             const uploader = (v.uploaderName || '').toLowerCase();
@@ -77,12 +73,10 @@ async function loadShortsFeed(tab) {
       card.className = 'short-card';
       card.dataset.vid = vid;
       
-      // Different UI for Audio tab
       let mediaHtml = '';
       if (tab === 'foryou') {
           mediaHtml = `<div class="short-video-wrap"><img src="${thumb}" class="short-poster" style="width:100%; height:100%; object-fit:cover; z-index:1; position:absolute;"></div>`;
       } else {
-          // Audio Tab: Blurred background with a spinning record look
           mediaHtml = `
             <div class="short-video-wrap" style="background: url('${thumb}') center/cover; filter: blur(20px) brightness(0.4); transform: scale(1.1);"></div>
             <div class="short-video-wrap" style="display:flex; justify-content:center; align-items:center; z-index:2;">
@@ -95,7 +89,11 @@ async function loadShortsFeed(tab) {
         ${mediaHtml}
         <div class="short-overlay" style="pointer-events: none; z-index:3; position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 20%, transparent 70%, rgba(0,0,0,0.8) 100%);"></div>
         
-        <!-- TOP HEADER -->
+        <!-- PLAY BUTTON FOR AUDIO TAB -->
+        <div class="audio-play-btn" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:70px; height:70px; background:rgba(0,224,208,0.9); border-radius:50%; z-index:30; justify-content:center; align-items:center; cursor:pointer; box-shadow: 0 4px 20px rgba(0,224,208,0.6);">
+          <svg viewBox="0 0 24 24" style="width:40px; height:40px; fill:#000; margin-left:6px;"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+
         <div class="short-top" style="z-index:10; display:flex; justify-content:space-between; align-items:center; padding: 40px 20px 20px 20px; position:absolute; top:0; width:100%;">
           <div style="display:flex; align-items:center; gap: 15px;">
             <svg viewBox="0 0 24 24" onclick="switchTab('home', this)" style="width:28px; height:28px; fill:#fff; cursor:pointer;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
@@ -145,6 +143,7 @@ function setupShortObserver(tab) {
             const card = entry.target;
             const wrap = card.querySelector('.short-video-wrap');
             const vid = card.dataset.vid;
+            const playBtn = card.querySelector('.audio-play-btn');
             
             if (tab === 'foryou') {
                 let existingIframe = wrap.querySelector('iframe');
@@ -172,11 +171,14 @@ function setupShortObserver(tab) {
             } else {
                 // AUDIO TAB LOGIC (100% AD-FREE)
                 let existingAudio = card.querySelector('audio');
-                let existingLoader = card.querySelector('.audio-loader');
                 
                 if (entry.isIntersecting) {
                     if (existingAudio) {
-                        existingAudio.play().catch(e => console.log("Autoplay blocked", e));
+                        existingAudio.play().then(() => {
+                            if(playBtn) playBtn.style.display = 'none';
+                        }).catch(e => {
+                            if(playBtn) playBtn.style.display = 'flex'; // Show play button if autoplay blocked
+                        });
                         return;
                     }
                     
@@ -186,9 +188,7 @@ function setupShortObserver(tab) {
                     loader.innerHTML = '<div style="color:#00e0d0; font-weight:bold; z-index:5; position:absolute; top:60%; left:50%; transform:translate(-50%,-50%);">Fetching Audio...</div>';
                     card.appendChild(loader);
                     
-                    // NEW FALLBACK SYSTEM: Try Piped first, then Invidious
                     async function getAudioUrl() {
-                        // 1. Try Piped
                         try {
                             const res = await window.pget('/streams/' + vid);
                             if (res && res.audioStreams && res.audioStreams.length > 0) {
@@ -197,7 +197,6 @@ function setupShortObserver(tab) {
                             }
                         } catch(e) {}
 
-                        // 2. Fallback to Invidious (More reliable for audio)
                         const invInstances = ['https://inv.nadeko.net', 'https://invidious.nerdvpn.de', 'https://iv.melmac.space'];
                         for (let inst of invInstances) {
                             try {
@@ -221,13 +220,31 @@ function setupShortObserver(tab) {
                             audio.src = streamUrl;
                             audio.loop = true;
                             card.appendChild(audio);
-                            audio.play().catch(e => console.log("Need user tap to play audio", e));
+                            
+                            audio.play().then(() => {
+                                if(playBtn) playBtn.style.display = 'none';
+                            }).catch(e => {
+                                // Autoplay blocked -> Show button
+                                if(playBtn) {
+                                    playBtn.style.display = 'flex';
+                                    playBtn.onclick = () => {
+                                        audio.play();
+                                        playBtn.style.display = 'none';
+                                    };
+                                }
+                            });
+                            
+                            // Handle link expiry/errors
+                            audio.onerror = () => {
+                                loader.innerHTML = '<div style="color:#ff5555; font-weight:bold; z-index:5; position:absolute; top:60%; left:50%; transform:translate(-50%,-50%);">Audio blocked by YouTube</div>';
+                            };
                         } else {
                             loader.innerHTML = '<div style="color:#ff5555; font-weight:bold; z-index:5; position:absolute; top:60%; left:50%; transform:translate(-50%,-50%);">Audio not available</div>';
                         }
                     });
                 } else {
                     if (existingAudio) existingAudio.pause();
+                    if (playBtn) playBtn.style.display = 'none';
                 }
             }
         });
