@@ -67,6 +67,7 @@ async function loadShortsFeed(tab) {
       card.className = 'short-card';
       card.dataset.vid = vid;
       card.dataset.playing = 'false';
+      card.dataset.hasLoaded = 'false'; // NEW: Prevents reloading and extra ads
       
       if (tab === 'foryou') {
           card.innerHTML = `
@@ -115,11 +116,9 @@ async function loadShortsFeed(tab) {
 
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:5; padding: 20px;">
                 
-                <!-- YOUTUBE PLAYER BOX -->
                 <div class="yt-audio-box" style="width:85vw; max-width:380px; aspect-ratio:1; border-radius:16px; overflow:hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.8); margin-bottom: 40px; background:#000; position:relative;">
                     <div id="yt-player-${vid}" style="width:100%; height:100%; pointer-events:none;"></div>
                     
-                    <!-- Custom Play Overlay -->
                     <div class="audio-play-overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.4); cursor:pointer; z-index:10;">
                         <div style="width:70px; height:70px; background:#00e0d0; border-radius:50%; display:flex; justify-content:center; align-items:center; box-shadow: 0 4px 20px rgba(0,224,208,0.6);">
                             <svg class="icon-play" viewBox="0 0 24 24" style="width:35px; height:35px; fill:#000; margin-left:5px; display:block;"><path d="M8 5v14l11-7z"/></svg>
@@ -170,14 +169,13 @@ function setupShortObserver(tab) {
                     if (existingIframe) existingIframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
                 }
             } else {
-                // AUDIOS TAB (YOUTUBE PLAYER WITH RELOAD TRICK)
+                // AUDIOS TAB (YOUTUBE PLAYER WITH NO-RELOAD ADS FIX)
                 const box = card.querySelector(`#yt-player-${vid}`);
                 const overlay = card.querySelector('.audio-play-overlay');
                 const iconPlay = card.querySelector('.icon-play');
                 const iconPause = card.querySelector('.icon-pause');
                 
                 if (entry.isIntersecting) {
-                    // Load the player if not loaded (Initially paused and muted)
                     if (!box.hasChildNodes()) {
                         const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=0&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&enablejsapi=1`;
                         const iframe = document.createElement('iframe');
@@ -191,14 +189,23 @@ function setupShortObserver(tab) {
                         let iframe = box.querySelector('iframe');
                         
                         if (card.dataset.playing === 'false') {
-                            // ACTION: PLAY (Reload trick for mobile sound)
-                            iframe.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=0&controls=0&modestbranding=1&rel=0&playsinline=1&enablejsapi=1`;
+                            if (card.dataset.hasLoaded === 'false') {
+                                // FIRST TIME: Reload to unmute and bypass mobile block
+                                iframe.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=0&controls=0&modestbranding=1&rel=0&playsinline=1&enablejsapi=1`;
+                                card.dataset.hasLoaded = 'true';
+                            } else {
+                                // SECOND TIME: Use postMessage so it doesn't reload and show a new ad!
+                                try {
+                                    iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'playVideo', args: []}), '*');
+                                    iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'unMute', args: []}), '*');
+                                } catch(e){}
+                            }
+                            
                             iconPlay.style.display = 'none'; 
                             iconPause.style.display = 'block';
                             card.dataset.playing = 'true';
-                            overlay.style.background = 'transparent'; // Let them see the video
+                            overlay.style.background = 'transparent'; 
                         } else {
-                            // ACTION: PAUSE
                             try { iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*'); } catch(e){}
                             iconPlay.style.display = 'block'; 
                             iconPause.style.display = 'none';
@@ -207,12 +214,9 @@ function setupShortObserver(tab) {
                         }
                     };
                 } else {
-                    // Pause when scrolled away
                     const iframe = box.querySelector('iframe');
                     if (iframe && card.dataset.playing === 'true') {
                         try { iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*'); } catch(e){}
-                        // Reset to muted state so it's ready for next click
-                        iframe.src = `https://www.youtube.com/embed/${vid}?autoplay=0&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&enablejsapi=1`;
                         card.dataset.playing = 'false';
                     }
                     if(iconPlay) { iconPlay.style.display = 'block'; iconPause.style.display = 'none'; }
