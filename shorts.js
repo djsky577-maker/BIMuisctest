@@ -1,5 +1,7 @@
 let currentShortsTab = 'foryou';
 let shortsObserver = null;
+let globalAudio = new Audio();
+let currentAudioCard = null;
 
 function switchShortsTab(tab) {
     if (currentShortsTab === tab) return;
@@ -7,6 +9,11 @@ function switchShortsTab(tab) {
     
     const tabForyou = document.getElementById('tab-foryou');
     const tabAudios = document.getElementById('tab-audios');
+    
+    if (globalAudio) {
+        globalAudio.pause();
+        globalAudio.src = '';
+    }
     
     if (tab === 'foryou') {
         tabForyou.style.color = '#fff';
@@ -97,16 +104,11 @@ async function loadShortsFeed(tab) {
             </div>
           `;
       } else {
-          // SPOTIFY STYLE UI with HIDDEN YOUTUBE PLAYER
+          // SPOTIFY STYLE UI
           card.innerHTML = `
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('${thumb}') center/cover; filter: blur(40px) brightness(0.3); transform: scale(1.2); z-index:1;"></div>
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.9)); z-index:2;"></div>
             
-            <!-- HIDDEN YOUTUBE IFRAME -->
-            <div class="hidden-yt-wrap" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; z-index:-1;">
-                <div class="yt-audio-frame" data-vid="${vid}"></div>
-            </div>
-
             <div class="short-top" style="z-index:10; display:flex; justify-content:space-between; align-items:center; padding: 40px 20px 20px 20px; position:absolute; top:0; width:100%;">
               <div style="display:flex; align-items:center; gap: 15px;">
                 <svg viewBox="0 0 24 24" onclick="switchTab('home', this)" style="width:28px; height:28px; fill:#fff; cursor:pointer;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
@@ -173,75 +175,78 @@ function setupShortObserver(tab) {
                     if (existingIframe) existingIframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
                 }
             } else {
-                // AUDIOS TAB WITH HIDDEN YOUTUBE PLAYER
+                // AUDIOS TAB (CORS PROXY FIX)
                 const playBtn = card.querySelector('.audio-play-btn');
                 const iconPlay = card.querySelector('.icon-play');
                 const iconPause = card.querySelector('.icon-pause');
                 const progressBar = card.querySelector('.audio-progress');
-                const ytWrap = card.querySelector('.yt-audio-frame');
                 
                 if (entry.isIntersecting) {
-                    // Create hidden iframe if it doesn't exist
-                    if (!ytWrap.querySelector('iframe')) {
-                        const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=0&mute=0&controls=0&modestbranding=1&rel=0&playsinline=1&enablejsapi=1`;
-                        const iframe = document.createElement('iframe');
-                        iframe.src = ytUrl;
-                        ytWrap.appendChild(iframe);
-                    }
-
-                    const iframe = ytWrap.querySelector('iframe');
+                    currentAudioCard = card;
+                    globalAudio.pause(); 
+                    if(iconPlay) { iconPlay.style.display = 'block'; iconPause.style.display = 'none'; }
+                    progressBar.style.width = '0%';
                     
-                    // Auto-play logic for hidden iframe
-                    let autoTimer = setTimeout(() => {
-                        try {
-                            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'playVideo', args: []}), '*');
-                            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'unMute', args: []}), '*');
-                            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'setVolume', args: [100]}), '*');
-                            iconPlay.style.display = 'none'; iconPause.style.display = 'block';
-                        } catch(e) {}
-                    }, 500);
-
-                    playBtn.onclick = (e) => {
+                    playBtn.onclick = async (e) => {
                         e.stopPropagation();
-                        clearTimeout(autoTimer);
-                        if (iconPlay.style.display === 'block') {
-                            // Play
+                        
+                        if (globalAudio.dataset.vid === vid && globalAudio.src) {
+                            if (globalAudio.paused) {
+                                await globalAudio.play();
+                                iconPlay.style.display = 'none'; iconPause.style.display = 'block';
+                            } else {
+                                globalAudio.pause();
+                                iconPlay.style.display = 'block'; iconPause.style.display = 'none';
+                            }
+                            return;
+                        }
+                        
+                        iconPlay.style.display = 'none'; 
+                        iconPause.style.display = 'block';
+                        
+                        let streamUrl = '';
+                        
+                        // 1. Fetch Piped Stream (use proxyUrl if available)
+                        try {
+                            const res = await window.pget('/streams/' + vid);
+                            if (res && res.audioStreams && res.audioStreams.length > 0) {
+                                let best = res.audioStreams.sort((a,b) => b.bitrate - a.bitrate)[0];
+                                streamUrl = best.proxyUrl ? best.proxyUrl : best.url;
+                            }
+                        } catch(err) {}
+
+                        // 2. CORS Proxy Fallback (If Piped URL is direct Googlevideo)
+                        if (!streamUrl) {
                             try {
-                                iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'playVideo', args: []}), '*');
-                                iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'unMute', args: []}), '*');
-                                iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'setVolume', args: [100]}), '*');
-                            } catch(e) {}
-                            iconPlay.style.display = 'none'; iconPause.style.display = 'block';
+                                const res = await window.pget('/streams/' + vid);
+                                if (res && res.audioStreams && res.audioStreams.length > 0) {
+                                    let best = res.audioStreams[0];
+                                    streamUrl = 'https://corsproxy.io/?' + encodeURIComponent(best.url);
+                                }
+                            } catch(err) {}
+                        }
+                        
+                        if (streamUrl) {
+                            globalAudio.src = streamUrl;
+                            globalAudio.dataset.vid = vid;
+                            try {
+                                await globalAudio.play();
+                                iconPlay.style.display = 'none'; iconPause.style.display = 'block';
+                            } catch(err) {
+                                iconPlay.style.display = 'block'; iconPause.style.display = 'none';
+                                alert("Browser blocked audio. Please tap again.");
+                            }
                         } else {
-                            // Pause
-                            try {
-                                iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
-                            } catch(e) {}
                             iconPlay.style.display = 'block'; iconPause.style.display = 'none';
+                            playBtn.innerHTML = '<span style="font-size:12px;font-weight:bold;">No Audio</span>';
                         }
                     };
                     
-                    // Fake progress bar animation for visual effect
-                    let prog = 0;
-                    let progTimer = setInterval(() => {
-                        if(iconPause.style.display === 'block' && prog < 100) {
-                            prog += 0.5;
-                            progressBar.style.width = prog + '%';
-                        }
-                    }, 500);
-                    card.dataset.progTimer = progTimer;
-                    
                 } else {
-                    clearTimeout(autoTimer);
-                    clearInterval(card.dataset.progTimer);
-                    const iframe = ytWrap.querySelector('iframe');
-                    if (iframe) {
-                        try {
-                            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
-                        } catch(e) {}
+                    if (globalAudio.dataset.vid === vid) {
+                        globalAudio.pause();
+                        if(iconPlay) { iconPlay.style.display = 'block'; iconPause.style.display = 'none'; }
                     }
-                    iconPlay.style.display = 'block'; iconPause.style.display = 'none';
-                    progressBar.style.width = '0%';
                 }
             }
         });
@@ -249,6 +254,17 @@ function setupShortObserver(tab) {
     
     cards.forEach(card => shortsObserver.observe(card));
 }
+
+// REAL Progress Bar tied to audio
+globalAudio.addEventListener('timeupdate', () => {
+    if (currentAudioCard && globalAudio.duration) {
+        const progressBar = currentAudioCard.querySelector('.audio-progress');
+        if (progressBar) {
+            const percent = (globalAudio.currentTime / globalAudio.duration) * 100;
+            progressBar.style.width = percent + '%';
+        }
+    }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
