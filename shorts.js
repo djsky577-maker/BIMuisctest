@@ -130,6 +130,9 @@ async function loadShortsFeed(tab) {
                         <div class="audio-progress" style="width:0%; height:100%; background:#00e0d0; border-radius:2px; transition:width 0.1s linear;"></div>
                     </div>
                     
+                    <!-- AUDIO STATUS TEXT -->
+                    <div class="audio-status" style="color:rgba(255,255,255,0.5); font-size:12px; text-align:center; margin-bottom:10px;">Tap play to load audio</div>
+
                     <div style="display:flex; justify-content:center; align-items:center; margin-top:20px;">
                         <div class="audio-play-btn" style="width:70px; height:70px; background:#00e0d0; border-radius:50%; display:flex; justify-content:center; align-items:center; cursor:pointer; box-shadow: 0 4px 20px rgba(0,224,208,0.4);">
                             <svg class="icon-play" viewBox="0 0 24 24" style="width:35px; height:35px; fill:#000; margin-left:5px; display:block;"><path d="M8 5v14l11-7z"/></svg>
@@ -175,38 +178,47 @@ function setupShortObserver(tab) {
                     if (existingIframe) existingIframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
                 }
             } else {
-                // AUDIOS TAB (CORS PROXY FIX)
+                // AUDIOS TAB
                 const playBtn = card.querySelector('.audio-play-btn');
                 const iconPlay = card.querySelector('.icon-play');
                 const iconPause = card.querySelector('.icon-pause');
                 const progressBar = card.querySelector('.audio-progress');
+                const statusText = card.querySelector('.audio-status');
                 
                 if (entry.isIntersecting) {
                     currentAudioCard = card;
-                    globalAudio.pause(); 
-                    if(iconPlay) { iconPlay.style.display = 'block'; iconPause.style.display = 'none'; }
-                    progressBar.style.width = '0%';
+                    if (globalAudio.dataset.vid !== vid) {
+                        globalAudio.pause();
+                        if(iconPlay) { iconPlay.style.display = 'block'; iconPause.style.display = 'none'; }
+                        progressBar.style.width = '0%';
+                        statusText.textContent = 'Tap play to load audio';
+                    }
                     
                     playBtn.onclick = async (e) => {
                         e.stopPropagation();
                         
+                        // If audio already loaded for this card
                         if (globalAudio.dataset.vid === vid && globalAudio.src) {
                             if (globalAudio.paused) {
                                 await globalAudio.play();
                                 iconPlay.style.display = 'none'; iconPause.style.display = 'block';
+                                statusText.textContent = 'Playing...';
                             } else {
                                 globalAudio.pause();
                                 iconPlay.style.display = 'block'; iconPause.style.display = 'none';
+                                statusText.textContent = 'Paused';
                             }
                             return;
                         }
                         
+                        // Fetch Audio
                         iconPlay.style.display = 'none'; 
                         iconPause.style.display = 'block';
+                        statusText.textContent = 'Fetching audio...';
                         
                         let streamUrl = '';
                         
-                        // 1. Fetch Piped Stream (use proxyUrl if available)
+                        // 1. Fetch Piped Stream (Use proxyUrl to bypass CORS)
                         try {
                             const res = await window.pget('/streams/' + vid);
                             if (res && res.audioStreams && res.audioStreams.length > 0) {
@@ -215,15 +227,22 @@ function setupShortObserver(tab) {
                             }
                         } catch(err) {}
 
-                        // 2. CORS Proxy Fallback (If Piped URL is direct Googlevideo)
+                        // 2. Invidious Fallback (Use local proxy route)
                         if (!streamUrl) {
-                            try {
-                                const res = await window.pget('/streams/' + vid);
-                                if (res && res.audioStreams && res.audioStreams.length > 0) {
-                                    let best = res.audioStreams[0];
-                                    streamUrl = 'https://corsproxy.io/?' + encodeURIComponent(best.url);
-                                }
-                            } catch(err) {}
+                            statusText.textContent = 'Trying backup server...';
+                            const invInstances = ['https://inv.nadeko.net', 'https://invidious.nerdvpn.de', 'https://iv.melmac.space'];
+                            for (let inst of invInstances) {
+                                try {
+                                    const r = await fetch(inst + '/api/v1/videos/' + vid);
+                                    if (r.ok) {
+                                        const data = await r.json();
+                                        if (data && data.adaptiveFormats) {
+                                            const audio = data.adaptiveFormats.find(f => f.type && f.type.includes('audio'));
+                                            if (audio && audio.url) { streamUrl = audio.url; break; }
+                                        }
+                                    }
+                                } catch(err) {}
+                            }
                         }
                         
                         if (streamUrl) {
@@ -232,13 +251,14 @@ function setupShortObserver(tab) {
                             try {
                                 await globalAudio.play();
                                 iconPlay.style.display = 'none'; iconPause.style.display = 'block';
+                                statusText.textContent = 'Playing...';
                             } catch(err) {
                                 iconPlay.style.display = 'block'; iconPause.style.display = 'none';
-                                alert("Browser blocked audio. Please tap again.");
+                                statusText.textContent = 'Error: Browser blocked audio. Tap again.';
                             }
                         } else {
                             iconPlay.style.display = 'block'; iconPause.style.display = 'none';
-                            playBtn.innerHTML = '<span style="font-size:12px;font-weight:bold;">No Audio</span>';
+                            statusText.textContent = 'Error: All servers failed to provide audio.';
                         }
                     };
                     
@@ -263,6 +283,14 @@ globalAudio.addEventListener('timeupdate', () => {
             const percent = (globalAudio.currentTime / globalAudio.duration) * 100;
             progressBar.style.width = percent + '%';
         }
+    }
+});
+
+// Handle loading state
+globalAudio.addEventListener('waiting', () => {
+    if (currentAudioCard) {
+        const statusText = currentAudioCard.querySelector('.audio-status');
+        if(statusText) statusText.textContent = 'Buffering...';
     }
 });
 
