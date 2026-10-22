@@ -1,7 +1,5 @@
 let currentShortsTab = 'foryou';
 let shortsObserver = null;
-let globalAudio = new Audio();
-let currentAudioCard = null;
 
 function switchShortsTab(tab) {
     if (currentShortsTab === tab) return;
@@ -9,11 +7,6 @@ function switchShortsTab(tab) {
     
     const tabForyou = document.getElementById('tab-foryou');
     const tabAudios = document.getElementById('tab-audios');
-    
-    if (globalAudio) {
-        globalAudio.pause();
-        globalAudio.src = '';
-    }
     
     if (tab === 'foryou') {
         tabForyou.style.color = '#fff';
@@ -104,11 +97,16 @@ async function loadShortsFeed(tab) {
             </div>
           `;
       } else {
-          // SPOTIFY STYLE UI (Made Bigger & Centered)
+          // SPOTIFY STYLE UI with HIDDEN YOUTUBE PLAYER
           card.innerHTML = `
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('${thumb}') center/cover; filter: blur(40px) brightness(0.3); transform: scale(1.2); z-index:1;"></div>
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.9)); z-index:2;"></div>
             
+            <!-- HIDDEN YOUTUBE IFRAME -->
+            <div class="hidden-yt-wrap" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; z-index:-1;">
+                <div class="yt-audio-frame" data-vid="${vid}"></div>
+            </div>
+
             <div class="short-top" style="z-index:10; display:flex; justify-content:space-between; align-items:center; padding: 40px 20px 20px 20px; position:absolute; top:0; width:100%;">
               <div style="display:flex; align-items:center; gap: 15px;">
                 <svg viewBox="0 0 24 24" onclick="switchTab('home', this)" style="width:28px; height:28px; fill:#fff; cursor:pointer;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
@@ -120,19 +118,16 @@ async function loadShortsFeed(tab) {
             </div>
 
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:5; padding: 20px;">
-                <!-- HUGE ALBUM ART -->
                 <img src="${thumb}" style="width:85vw; max-width:380px; aspect-ratio:1; border-radius:16px; object-fit:cover; box-shadow: 0 20px 50px rgba(0,0,0,0.8); margin-bottom: 40px;">
                 
                 <div style="width:100%; max-width:380px; text-align:left; padding: 0 10px;">
                     <h2 style="color:#fff; font-size:26px; font-weight:900; margin:0 0 8px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${title}</h2>
                     <p style="color:rgba(255,255,255,0.7); font-size:18px; margin:0 0 30px 0;">${artist}</p>
                     
-                    <!-- Progress Bar -->
                     <div style="width:100%; height:4px; background:rgba(255,255,255,0.2); border-radius:2px; margin-bottom:10px;">
                         <div class="audio-progress" style="width:0%; height:100%; background:#00e0d0; border-radius:2px; transition:width 0.1s linear;"></div>
                     </div>
                     
-                    <!-- Play/Pause Button -->
                     <div style="display:flex; justify-content:center; align-items:center; margin-top:20px;">
                         <div class="audio-play-btn" style="width:70px; height:70px; background:#00e0d0; border-radius:50%; display:flex; justify-content:center; align-items:center; cursor:pointer; box-shadow: 0 4px 20px rgba(0,224,208,0.4);">
                             <svg class="icon-play" viewBox="0 0 24 24" style="width:35px; height:35px; fill:#000; margin-left:5px; display:block;"><path d="M8 5v14l11-7z"/></svg>
@@ -178,84 +173,75 @@ function setupShortObserver(tab) {
                     if (existingIframe) existingIframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
                 }
             } else {
-                // AUDIOS TAB
+                // AUDIOS TAB WITH HIDDEN YOUTUBE PLAYER
                 const playBtn = card.querySelector('.audio-play-btn');
                 const iconPlay = card.querySelector('.icon-play');
                 const iconPause = card.querySelector('.icon-pause');
                 const progressBar = card.querySelector('.audio-progress');
+                const ytWrap = card.querySelector('.yt-audio-frame');
                 
                 if (entry.isIntersecting) {
-                    currentAudioCard = card;
-                    globalAudio.pause(); 
-                    if(iconPlay) { iconPlay.style.display = 'block'; iconPause.style.display = 'none'; }
-                    progressBar.style.width = '0%';
+                    // Create hidden iframe if it doesn't exist
+                    if (!ytWrap.querySelector('iframe')) {
+                        const ytUrl = `https://www.youtube.com/embed/${vid}?autoplay=0&mute=0&controls=0&modestbranding=1&rel=0&playsinline=1&enablejsapi=1`;
+                        const iframe = document.createElement('iframe');
+                        iframe.src = ytUrl;
+                        ytWrap.appendChild(iframe);
+                    }
+
+                    const iframe = ytWrap.querySelector('iframe');
                     
-                    playBtn.onclick = async (e) => {
-                        e.stopPropagation();
-                        
-                        if (globalAudio.dataset.vid === vid && globalAudio.src) {
-                            if (globalAudio.paused) {
-                                await globalAudio.play();
-                                iconPlay.style.display = 'none'; iconPause.style.display = 'block';
-                            } else {
-                                globalAudio.pause();
-                                iconPlay.style.display = 'block'; iconPause.style.display = 'none';
-                            }
-                            return;
-                        }
-                        
-                        // Fetch Audio
-                        iconPlay.style.display = 'none'; 
-                        iconPause.style.display = 'block';
-                        
-                        let streamUrl = '';
-                        
-                        // 1. Try Piped
+                    // Auto-play logic for hidden iframe
+                    let autoTimer = setTimeout(() => {
                         try {
-                            const res = await window.pget('/streams/' + vid);
-                            if (res && res.audioStreams && res.audioStreams.length > 0) {
-                                streamUrl = res.audioStreams.sort((a,b) => b.bitrate - a.bitrate)[0].url;
-                            }
-                        } catch(err) {}
-                        
-                        // 2. Try Invidious Fallback
-                        if (!streamUrl) {
-                            const invInstances = ['https://inv.nadeko.net', 'https://invidious.nerdvpn.de', 'https://iv.melmac.space'];
-                            for (let inst of invInstances) {
-                                try {
-                                    const r = await fetch(inst + '/api/v1/videos/' + vid);
-                                    if (r.ok) {
-                                        const data = await r.json();
-                                        if (data && data.adaptiveFormats) {
-                                            const audio = data.adaptiveFormats.find(f => f.type && f.type.includes('audio'));
-                                            if (audio && audio.url) { streamUrl = audio.url; break; }
-                                        }
-                                    }
-                                } catch(err) {}
-                            }
-                        }
-                        
-                        if (streamUrl) {
-                            globalAudio.src = streamUrl;
-                            globalAudio.dataset.vid = vid;
+                            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'playVideo', args: []}), '*');
+                            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'unMute', args: []}), '*');
+                            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'setVolume', args: [100]}), '*');
+                            iconPlay.style.display = 'none'; iconPause.style.display = 'block';
+                        } catch(e) {}
+                    }, 500);
+
+                    playBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        clearTimeout(autoTimer);
+                        if (iconPlay.style.display === 'block') {
+                            // Play
                             try {
-                                await globalAudio.play();
-                                iconPlay.style.display = 'none'; iconPause.style.display = 'block';
-                            } catch(err) {
-                                iconPlay.style.display = 'block'; iconPause.style.display = 'none';
-                                alert("Browser blocked audio. Please tap again.");
-                            }
+                                iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'playVideo', args: []}), '*');
+                                iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'unMute', args: []}), '*');
+                                iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'setVolume', args: [100]}), '*');
+                            } catch(e) {}
+                            iconPlay.style.display = 'none'; iconPause.style.display = 'block';
                         } else {
+                            // Pause
+                            try {
+                                iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
+                            } catch(e) {}
                             iconPlay.style.display = 'block'; iconPause.style.display = 'none';
-                            playBtn.innerHTML = '<span style="font-size:12px;font-weight:bold;">No Audio</span>';
                         }
                     };
                     
+                    // Fake progress bar animation for visual effect
+                    let prog = 0;
+                    let progTimer = setInterval(() => {
+                        if(iconPause.style.display === 'block' && prog < 100) {
+                            prog += 0.5;
+                            progressBar.style.width = prog + '%';
+                        }
+                    }, 500);
+                    card.dataset.progTimer = progTimer;
+                    
                 } else {
-                    if (globalAudio.dataset.vid === vid) {
-                        globalAudio.pause();
-                        if(iconPlay) { iconPlay.style.display = 'block'; iconPause.style.display = 'none'; }
+                    clearTimeout(autoTimer);
+                    clearInterval(card.dataset.progTimer);
+                    const iframe = ytWrap.querySelector('iframe');
+                    if (iframe) {
+                        try {
+                            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'pauseVideo', args: []}), '*');
+                        } catch(e) {}
                     }
+                    iconPlay.style.display = 'block'; iconPause.style.display = 'none';
+                    progressBar.style.width = '0%';
                 }
             }
         });
@@ -263,17 +249,6 @@ function setupShortObserver(tab) {
     
     cards.forEach(card => shortsObserver.observe(card));
 }
-
-// Update progress bar
-globalAudio.addEventListener('timeupdate', () => {
-    if (currentAudioCard && globalAudio.duration) {
-        const progressBar = currentAudioCard.querySelector('.audio-progress');
-        if (progressBar) {
-            const percent = (globalAudio.currentTime / globalAudio.duration) * 100;
-            progressBar.style.width = percent + '%';
-        }
-    }
-});
 
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
